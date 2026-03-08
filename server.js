@@ -71,4 +71,9 @@ app.use((req, res, next) => {
         next(); 
     }
 });
+
+// Start the engine!
+app.listen(3000, () => {
+    console.log("Your CTF server is running at http://localhost:3000");
+});
 // ------------------------------------------------
