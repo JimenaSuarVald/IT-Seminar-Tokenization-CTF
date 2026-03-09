@@ -63,101 +63,150 @@ app.use((req, res, next) => {
                 <br><br>
                 This one goes out for all the kitties in the world.
 
-                                                            <audio id="jill-radio" loop>
-                                            <source src="/wildlife.mp3" type="audio/mpeg">
-                                        </audio>
+                                         <!-- Audio Player (fixed) -->
+                            <audio id="jill-radio" loop>
+                                <source src="/wildlife.mp3" type="audio/mpeg">
+                            </audio>
 
-                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 25px;">
-                                            <div id="music-btn" onclick="togglePlay()" style="cursor: pointer; border: 2px solid ${palette.accent}; padding: 10px 20px; border-radius: 30px; color: ${palette.text}; box-shadow: 0 0 10px ${palette.accent}; font-weight: bold; transition: all 0.3s ease;">
-                                                ▶ Play Track
-                                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 25px;">
+                                <!-- Play/Pause Button -->
+                                <div id="music-btn" onclick="togglePlay()" 
+                                    style="cursor: pointer; border: 2px solid ${palette.accent}; padding: 10px 20px; border-radius: 30px; color: ${palette.text}; box-shadow: 0 0 10px ${palette.accent}; font-weight: bold; transition: all 0.3s ease;">
+                                    ▶ Play Track
+                                </div>
 
-                                            <style>
+                                <!-- Timer + Seek Bar -->
+                                <div style="display: flex; align-items: center; gap: 15px; width: 100%; justify-content: center;">
+                                    <span id="timer">0:00 / 0:00</span>
+                                    <input type="range" id="seek-bar" value="0" step="0.1">
+                                </div>
+                            </div>
 
-                                                #seek-bar {
-                                                    -webkit-appearance: none;  /* Hides default styling */
-                                                    appearance: none;
-                                                    width: 250px;
-                                                    height: 4px;             /* This makes the bar very thin */
-                                                    background: #444;       /* Dark gray track background */
-                                                    border-radius: 2px;
-                                                    outline: none;
-                                                    cursor: pointer;
-                                                    margin: 0;
-                                                    padding: 0;
-                                                }
+                            <style>
+                                #seek-bar {
+                                    -webkit-appearance: none;
+                                    appearance: none;
+                                    width: 250px;
+                                    height: 4px;
+                                    background: #444;
+                                    border-radius: 2px;
+                                    outline: none;
+                                    cursor: pointer;
+                                    margin: 0;
+                                    padding: 0;
+                                }
 
-                                                /* This styles the round "thumb" (handle) for Chrome/Safari/Edge/Ngrok Phone */
-                                                #seek-bar::-webkit-slider-thumb {
-                                                    -webkit-appearance: none; /* Hides default styling */
-                                                    appearance: none;
-                                                    width: 14px;              /* Width of the round handle */
-                                                    height: 14px;             /* Height of the round handle */
-                                                    border-radius: 50%;      /* Makes it perfectly round */
-                                                    background: ${palette.text}; /* Uses your orange/sunset text color */
-                                                    border: 2px solid ${palette.bg}; /* A purple border to make it pop */
-                                                    box-shadow: 0 0 8px ${palette.accent}; /* Gives the handle a pink glow */
-                                                    cursor: pointer;
-                                                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                                                }
+                                #seek-bar::-webkit-slider-thumb {
+                                    -webkit-appearance: none;
+                                    appearance: none;
+                                    width: 14px;
+                                    height: 14px;
+                                    border-radius: 50%;
+                                    background: ${palette.text};
+                                    border: 2px solid ${palette.bg};
+                                    box-shadow: 0 0 8px ${palette.accent};
+                                    cursor: pointer;
+                                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                                }
 
-                                                /* When you hover over the handle, make it bigger and glow brighter */
-                                                #seek-bar::-webkit-slider-thumb:hover {
-                                                    transform: scale(1.2);
-                                                    box-shadow: 0 0 15px ${palette.accent};
-                                                }
+                                #seek-bar::-webkit-slider-thumb:hover {
+                                    transform: scale(1.2);
+                                    box-shadow: 0 0 15px ${palette.accent};
+                                }
 
-                                                /* This is the same styling but specifically for Firefox */
-                                                #seek-bar::-moz-range-thumb {
-                                                    width: 14px;
-                                                    height: 14px;
-                                                    border-radius: 50%;
-                                                    background: ${palette.text};
-                                                    border: 2px solid ${palette.bg};
-                                                    box-shadow: 0 0 8px ${palette.accent};
-                                                    cursor: pointer;
-                                                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                                                }
-                                                #seek-bar::-moz-range-thumb:hover {
-                                                    transform: scale(1.2);
-                                                    box-shadow: 0 0 15px ${palette.accent};
-                                                }
-                                            </style>
-                                            
-                                            <input type="range" id="seek-bar" value="0" step="0.1">
-                                        </div>
+                                #seek-bar::-moz-range-thumb {
+                                    width: 14px;
+                                    height: 14px;
+                                    border-radius: 50%;
+                                    background: ${palette.text};
+                                    border: 2px solid ${palette.bg};
+                                    box-shadow: 0 0 8px ${palette.accent};
+                                    cursor: pointer;
+                                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                                }
 
-                                        <script>
-                                            const audio = document.getElementById('jill-radio');
-                                            const btn = document.getElementById('music-btn');
-                                            const seekBar = document.getElementById('seek-bar');
+                                #seek-bar::-moz-range-thumb:hover {
+                                    transform: scale(1.2);
+                                    box-shadow: 0 0 15px ${palette.accent};
+                                }
 
-                                            function togglePlay() {
-                                                if (audio.paused) {
-                                                    audio.play();
-                                                    btn.innerHTML = '₊⊹˚♬ (▶) Playing... ♪⊹˚';
-                                                    btn.style.boxShadow = '0 0 25px ${palette.accent}';
-                                                    btn.style.color = '${palette.accent}';
-                                                } else {
-                                                    audio.pause();
-                                                    btn.innerHTML = '( ❚❚ ) Paused';
-                                                    btn.style.boxShadow = '0 0 10px ${palette.accent}';
-                                                    btn.style.color = '${palette.text}';
-                                                }
-                                            }
+                                #timer {
+                                    font-family: monospace;
+                                    color: ${palette.text};
+                                    min-width: 100px;
+                                    text-align: right;
+                                }
+                            </style>
 
-                                            // Update the slider as the song plays
-                                            audio.ontimeupdate = () => {
-                                                const percentage = (audio.currentTime / audio.duration) * 100;
-                                                seekBar.value = percentage;
-                                            };
+                            <script>
+                                const audio = document.getElementById('jill-radio');
+                                const btn = document.getElementById('music-btn');
+                                const seekBar = document.getElementById('seek-bar');
+                                const timer = document.getElementById('timer');
 
-                                            // Let the user "rewind" or "skip" by dragging the slider
-                                            seekBar.oninput = () => {
-                                                const time = (seekBar.value / 100) * audio.duration;
-                                                audio.currentTime = time;
-                                            };
-                                        </script>
+                                // Colors are already embedded from the server (palette)
+                                const accentColor = '${palette.accent}';
+                                const textColor = '${palette.text}';
+
+                                // Helper: format seconds → MM:SS
+                                function formatTime(seconds) {
+                                    if (isNaN(seconds) || seconds < 0) return '0:00';
+                                    const mins = Math.floor(seconds / 60);
+                                    const secs = Math.floor(seconds % 60);
+                                    return mins + ':' + (secs < 10 ? '0' + secs : secs);
+                                }
+
+                                // Update timer and seek bar position
+                                function updateTimerAndSeek() {
+                                    if (audio.duration && !isNaN(audio.duration)) {
+                                        const current = formatTime(audio.currentTime);
+                                        const total = formatTime(audio.duration);
+                                        timer.textContent = current + ' / ' + total;
+                                        
+                                        const percent = (audio.currentTime / audio.duration) * 100;
+                                        seekBar.value = percent;
+                                    } else {
+                                        timer.textContent = '0:00 / 0:00';
+                                    }
+                                }
+
+                                // Play/Pause toggle
+                                function togglePlay() {
+                                    if (audio.paused) {
+                                        audio.play();
+                                        btn.innerHTML = '₊⊹˚♬ (▶) Playing... ♪⊹˚';
+                                        btn.style.boxShadow = '0 0 25px ' + accentColor;
+                                        btn.style.color = accentColor;
+                                    } else {
+                                        audio.pause();
+                                        btn.innerHTML = '( ❚❚ ) Paused';
+                                        btn.style.boxShadow = '0 0 10px ' + accentColor;
+                                        btn.style.color = textColor;
+                                    }
+                                }
+
+                                // Update while playing
+                                audio.ontimeupdate = updateTimerAndSeek;
+
+                                // When metadata (duration) is loaded
+                                audio.onloadedmetadata = updateTimerAndSeek;
+
+                                // Seek when slider is dragged
+                                seekBar.oninput = function() {
+                                    if (audio.duration && !isNaN(audio.duration)) {
+                                        const newTime = (seekBar.value / 100) * audio.duration;
+                                        audio.currentTime = newTime;
+                                        // Update timer immediately for smoothness
+                                        updateTimerAndSeek();
+                                    }
+                                };
+
+                                // Initial update in case metadata is already ready
+                                if (audio.readyState >= 1) {
+                                    updateTimerAndSeek();
+                                }
+                            </script>                                       
+
 
 
                 <div style="font-size: 2em; margin-top: 10px; color: ${palette.accent};">
