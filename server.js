@@ -5,7 +5,27 @@ const port = 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+const sqlite3 = require('sqlite3').verbose();
 
+// Create or open the database file
+const db = new sqlite3.Database('./ctf_database.sqlite', (err) => {
+    if (err) {
+        console.error("Database opening error: ", err.message);
+    } else {
+        console.log("Connected to the SQLite database.");
+    }
+});
+
+// Create the 'players' table if it doesn't exist
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS players (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        score INTEGER DEFAULT 0,
+        found_flags TEXT DEFAULT ''
+    )`);
+});
 
 app.use((req, res, next) => {
     // Change 'true' to 'false' when you are ready to launch!
