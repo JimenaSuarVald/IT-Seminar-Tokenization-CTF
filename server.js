@@ -6,14 +6,8 @@ const port = 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// When a player visits your site, send them your index.html file
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
-
-// --- TEMPORARY UNDER CONSTRUCTION MODE ---
-
 // --- TEMPORARY "LOFI HACKER" MAINTENANCE MODE ---
+// (This must come BEFORE the app.get routes!)
 app.use((req, res, next) => {
     // Change 'true' to 'false' when you are ready to launch!
     const isUnderConstruction = true; 
@@ -48,7 +42,7 @@ app.use((req, res, next) => {
                     h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 0 10px ${palette.text}; }
                     p { font-size: 1.2em; max-width: 600px; line-height: 1.5; color: #fff; }
                     .hacker-gif {
-                        width: 350px; /* Adjust size as needed */
+                        width: 350px;
                         max-width: 80%;
                         border: 2px solid ${palette.text};
                         box-shadow: 0 0 15px ${palette.accent};
@@ -71,9 +65,15 @@ app.use((req, res, next) => {
         next(); 
     }
 });
+// ------------------------------------------------
+
+// When a player visits your site, send them your index.html file
+// (Now they can only reach this if isUnderConstruction is false!)
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
 
 // Start the engine!
 app.listen(3000, () => {
     console.log("Your CTF server is running at http://localhost:3000");
 });
-// ------------------------------------------------
