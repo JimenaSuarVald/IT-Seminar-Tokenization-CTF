@@ -5,13 +5,12 @@ const port = 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// --- TEMPORARY "LOFI HACKER" MAINTENANCE MODE ---
-// (This must come BEFORE the app.get routes!)
+
+
 app.use((req, res, next) => {
     // Change 'true' to 'false' when you are ready to launch!
     const isUnderConstruction = true; 
-    
-    // Sampled Palette from your image:
+    res.setHeader('ngrok-skip-browser-warning', 'true'); // This kills the annoying ngrok popup!
     const palette = {
         bg: '#1a102a',      // Deep purple shadow
         text: '#ffb74d',    // Warm orange/sunset glow
@@ -56,7 +55,7 @@ app.use((req, res, next) => {
                 
                 <h1> ✩₊˚.⋆ WORK IN PROGRESS ⋆⁺₊✧</h1>
                 <p>
-                The <span class="hacker-font">Tokenization & Embeddings</span> workforce is currently working really hard on getting this site up and running!
+                The <span class="hacker-font">Tokenization & Embeddings</span> team is currently working really hard on getting this site up and running!
                 <br><br>
                 Please be sure to come back later!
                 <br><br>
@@ -217,10 +216,8 @@ app.use((req, res, next) => {
         next(); 
     }
 });
-// ------------------------------------------------
-
-// When a player visits your site, send them your index.html file
-// (Now they can only reach this if isUnderConstruction is false!)
+// Solo pueden llegar aquí si isUnderConstruction == false
+// Gracias al next();
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
