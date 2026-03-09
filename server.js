@@ -55,9 +55,12 @@ app.use((req, res, next) => {
             <body>
                 <img src="/jillWIP.gif" alt="System Admin Working" class="hacker-gif">
                 
-                <h1>🚧 ACCESS RESTRICTED 🚧</h1>
-                <p>The <span class="hacker-font">ITSeminar</span> CTF systems are currently offline for critical reinforcements. The network grid is being secured.</p>
-                <p>Please check back later.</p>
+                <h1> ✩₊˚.⋆ WORK IN PROGRESS ⋆⁺₊✧</h1>
+                <p>The <span class="hacker-font">Tokenization & Embeddings</span> workforce's systems are currently offline for critical reinforcements. The network grid is being secured.</p>
+                <p>Please be sure to come back later!</p>
+                <div style="font-size: 2em; margin-top: 30px; color: ${palette.accent};">
+    (ㅅ´ ˘ &#96;)  ᶻ 𝘇 𐰁 
+</div>
             </body>
             </html>
         `);
