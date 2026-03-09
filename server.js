@@ -60,7 +60,7 @@ app.use((req, res, next) => {
                 <br><br>
                 Please be sure to come back later!
                 <br><br>
-                This one goes out to all the cats ins the world.
+                This one goes out to all the pigeons in the world.
 
                              <audio id="jill-radio" loop preload="auto">
                             <source src="/Wildlife.mp3" type="audio/mpeg">
