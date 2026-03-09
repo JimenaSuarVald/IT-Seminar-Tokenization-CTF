@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const port = 3000;
-express.static.mime.define({'audio/mpeg': ['mp3']});
 // This tells the server how to read the form data sent by the player
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
