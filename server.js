@@ -1,11 +1,14 @@
-require('dotenv').config(); // CRITICAL FIX: Must load before trying to read process.env!
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const path = require('path');
+const session = require('express-session');
 const adminKey = process.env.ADMIN_KEY;
-app.set('trust proxy', true);
 const port = process.env.PORT || 3000; 
 const sessionSecret = process.env.SESSION_SECRET
+
+app.set('trust proxy', true);
 
 // This tells the server how to read the form data sent by the player
 app.use(express.urlencoded({ extended: true }));
@@ -67,7 +70,7 @@ app.use((req, res, next) => {
     }
 });
 
-const session = require('express-session');
+
 // Cookies
 app.use(session({
     secret: sessionSecret, 
@@ -160,8 +163,9 @@ app.get('/master-list', (req, res) => {
     });
 });
 
+// THE BROKEN CODE
 app.get(__dirname, 'views', '/leaderboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'leaderboard.html'));
+    res.sendFile(path.join(__dirname, 'leaderboard.html'));
 });
 
 app.get('/api/scores', (req, res) => {
