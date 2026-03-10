@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+// Let Render choose the port, default to 3000 for your local Pi
+const port = process.env.PORT || 3000; 
+const path = require('path');
+require('dotenv').config();
+
 // This tells the server how to read the form data sent by the player
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -30,20 +34,21 @@ db.serialize(() => {
 app.use((req, res, next) => {
     // Change 'true' to 'false' when you are ready to launch!
     const isUnderConstruction = true; 
-    res.setHeader('ngrok-skip-browser-warning', 'true'); // This kills the annoying ngrok popup!
+    res.setHeader('ngrok-skip-browser-warning', 'true'); 
     const palette = {
-        bg: '#1a102a',      // Deep purple shadow
-        text: '#ffb74d',    // Warm orange/sunset glow
-        accent: '#e066a3',  // Purple-pink accent
+        bg: '#1a102a',      
+        text: '#ffb74d',    
+        accent: '#e066a3',  
     };
 
-    if (isUnderConstruction && req.query.admin !== 'jillian') {
+    // Use the Environment Variable here!
+    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY) {
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>CTF Systems Reinforcing</title>
+                <title>Work in progress</title>
                 <style>
                     body {
                         background-color: ${palette.bg};
@@ -159,11 +164,9 @@ app.use((req, res, next) => {
                                 const seekBar = document.getElementById('seek-bar');
                                 const timer = document.getElementById('timer');
 
-                                // Colors are already embedded from the server (palette)
                                 const accentColor = '${palette.accent}';
                                 const textColor = '${palette.text}';
 
-                                // Helper: format seconds → MM:SS
                                 function formatTime(seconds) {
                                     if (isNaN(seconds) || seconds < 0) return '0:00';
                                     const mins = Math.floor(seconds / 60);
@@ -171,7 +174,6 @@ app.use((req, res, next) => {
                                     return mins + ':' + (secs < 10 ? '0' + secs : secs);
                                 }
 
-                                // Update timer and seek bar position
                                 function updateTimerAndSeek() {
                                     if (audio.duration && !isNaN(audio.duration)) {
                                         const current = formatTime(audio.currentTime);
@@ -185,7 +187,6 @@ app.use((req, res, next) => {
                                     }
                                 }
 
-                                // Play/Pause toggle
                                 function togglePlay() {
                                     if (audio.paused) {
                                         audio.play();
@@ -200,29 +201,21 @@ app.use((req, res, next) => {
                                     }
                                 }
 
-                                // Update while playing
                                 audio.ontimeupdate = updateTimerAndSeek;
-
-                                // When metadata (duration) is loaded
                                 audio.onloadedmetadata = updateTimerAndSeek;
 
-                                // Seek when slider is dragged
                                 seekBar.oninput = function() {
                                     if (audio.duration && !isNaN(audio.duration)) {
                                         const newTime = (seekBar.value / 100) * audio.duration;
                                         audio.currentTime = newTime;
-                                        // Update timer immediately for smoothness
                                         updateTimerAndSeek();
                                     }
                                 };
 
-                                // Initial update in case metadata is already ready
                                 if (audio.readyState >= 1) {
                                     updateTimerAndSeek();
                                 }
                             </script>                                      
-
-
 
                 <div style="font-size: 2em; margin-top: 10px; color: ${palette.accent};">
                 (ㅅ´ ˘ \`)  ᶻ 𝘇 𐰁 
@@ -236,33 +229,30 @@ app.use((req, res, next) => {
 });
 const session = require('express-session');
 
-// 1. Initialize Session Memory
+// Use the Environment Variable for the session secret!
 app.use(session({
-    secret: 'jill-cyber-secret-key', // This encrypts the cookies
+    secret: process.env.SESSION_SECRET, 
     resave: false,
     saveUninitialized: false
 }));
 
-// 2. THE BOUNCER: A custom middleware to check if someone is logged in
+// THE BOUNCER
 function requireLogin(req, res, next) {
     if (req.session && req.session.userId) {
-        next(); // They have a valid session badge! Let them in.
+        next(); 
     } else {
-        // Pass the admin key so you don't get locked out by your own WIP screen!
-        res.redirect('/login?admin=jillian'); 
+        res.redirect(`/login?admin=${process.env.ADMIN_KEY}`); 
     }
 }
 
 // --- PAGE AND LOGIC ROUTES ---
 
-// Redirect the base URL straight to the game
-app.get('/', (req, res) => {
-    res.redirect('/game?admin=jillian');
+app.get('/Tasks', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-// --- REGISTRATION ---
 app.get('/register', (req, res) => {
-    res.sendFile(__dirname + '/registration.html');
+    res.sendFile(__dirname, 'views' + '/registration.html');
 });
 
 app.post('/register', (req, res) => {
@@ -273,20 +263,17 @@ app.post('/register', (req, res) => {
         if (err) {
             return res.send(`<h1 style="color:red; text-align:center;">Username taken! Hit back.</h1>`);
         }
-        // If successful, send them to the login page with the admin key!
-        res.redirect('/login?admin=jillian'); 
+        res.redirect(`/login?admin=${process.env.ADMIN_KEY}`); 
     });
 });
 
-// --- LOGIN ---
 app.get('/login', (req, res) => {
-    res.sendFile(__dirname + '/login.html'); 
+    res.sendFile(__dirname, 'views'+ '/login.html'); 
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     
-    // Look up the player in the database
     const sql = `SELECT * FROM players WHERE username = ? AND password = ?`;
     db.get(sql, [username, password], (err, user) => {
         if (err) {
@@ -294,33 +281,28 @@ app.post('/login', (req, res) => {
             return res.status(500).send("Server error");
         }
         if (user) {
-            // SUCCESS! Give them a session badge with their ID and Username
             req.session.userId = user.id;
             req.session.username = user.username;
-            res.redirect('/game?admin=jillian'); 
+            res.redirect(`/game?admin=${process.env.ADMIN_KEY}`); 
         } else {
-            // FAILURE! 
             res.send(`<h1 style="color:red; text-align:center;">Invalid username or password! Hit back.</h1>`);
         }
     });
 });
 
-// --- THE MAIN GAME (PROTECTED) ---
 app.get('/game', requireLogin, (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname, 'views' + '/index.html');
 });
 
 // Secret route to see all players
 app.get('/master-list', (req, res) => {
-    // Only allow access if the admin key is present
-    if (req.query.admin !== 'jillian') {
+    if (req.query.admin !== process.env.ADMIN_KEY) {
         return res.status(403).send("Access Denied.");
     }
 
     db.all("SELECT id, username, score FROM players", [], (err, rows) => {
         if (err) return res.status(500).send(err.message);
         
-        // Create a simple HTML table to show the data
         let html = '<body style="background:#1a102a; color:#ffb74d; font-family:monospace;">';
         html += '<h1>REGISTERED ENTITIES</h1><table border="1" cellpadding="10">';
         html += '<tr><th>ID</th><th>Username</th><th>Score</th></tr>';
@@ -334,12 +316,10 @@ app.get('/master-list', (req, res) => {
     });
 });
 
-// 1. Show the Leaderboard Page (Publicly accessible)
 app.get('/leaderboard', (req, res) => {
     res.sendFile(__dirname + '/leaderboard.html');
 });
 
-// 2. The Data API (The HTML file calls this every 5 seconds)
 app.get('/api/scores', (req, res) => {
     const sql = `SELECT username, score FROM players ORDER BY score DESC`;
     db.all(sql, [], (err, rows) => {
@@ -348,7 +328,6 @@ app.get('/api/scores', (req, res) => {
     });
 });
 
-// Start the engine!
-app.listen(3000, () => {
-    console.log("Your CTF server is running at http://localhost:3000");
+app.listen(port, () => {
+    console.log(`Your CTF server is running on port ${port}`);
 });
