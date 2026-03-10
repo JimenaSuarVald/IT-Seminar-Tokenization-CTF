@@ -19,12 +19,7 @@ console.log(`TIMESTAMP: ${new Date().toISOString()}`);
 console.log(`PORT: ${process.env.PORT || 3000}`);
 console.log("==========================================");
 
-// Cookies
-app.use(session({
-    secret: sessionSecret, 
-    resave: false,
-    saveUninitialized: false
-}));
+
 
 // Looks for Cloudflare's connecting IP, otherwise falls back to standard IP
 app.use((req, res, next) => {
@@ -73,6 +68,12 @@ app.use((req, res, next) => {
 });
 
 const session = require('express-session');
+// Cookies
+app.use(session({
+    secret: sessionSecret, 
+    resave: false,
+    saveUninitialized: false
+}));
 
 // Needed login to go through
 function requireLogin(req, res, next) {
@@ -160,8 +161,7 @@ app.get('/master-list', (req, res) => {
 });
 
 app.get(__dirname, 'views', '/leaderboard', (req, res) => {
-    // Assuming you didn't move this into the views folder based on your code
-    res.sendFile(path.join(__dirname, 'leaderboard.html'));
+    res.sendFile(path.join(__dirname, 'views', 'leaderboard.html'));
 });
 
 app.get('/api/scores', (req, res) => {
@@ -180,7 +180,7 @@ let gameState = {
     unlockedTasks: 1 // Start with only 1 task available
 };
 
-app.get('/admin-panel', (req, res) => {
+app.get('/supersecretcyber-panel', (req, res) => {
     if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Go away, bot!");
     res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
