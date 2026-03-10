@@ -77,25 +77,24 @@ const session = require('express-session');
 // Needed login to go through
 function requireLogin(req, res, next) {
     if (req.session && req.session.userId) {
-        next(); 
+        next(); // They are logged in, let them through
     } else {
-        res.redirect('/login'); 
+        if (req.query.admin) {
+            res.redirect(`/login?admin=${req.query.admin}`);
+        } else {
+            res.redirect('/login'); 
+        }
     }
 }
 
 // MAIN ENTRANCE
-app.get('/', (req, res) => {
-    // If they used the admin key, carry it over to the login page
-    requireLogin;
+app.get('/', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
-    
 });
-
 // Tasks / Main menu
 app.get('/Tasks', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
-
 
 //Registration menu
 app.get('/register', (req, res) => {
@@ -136,11 +135,6 @@ app.post('/login', (req, res) => {
             res.send(`<h1 style="color:red; text-align:center;">Invalid username or password! Hit back.</h1>`);
         }
     });
-});
-
-app.get('/game', requireLogin, (req, res) => {
-    // CRITICAL FIX: Repaired broken comma syntax
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 // Secret route to see all players
