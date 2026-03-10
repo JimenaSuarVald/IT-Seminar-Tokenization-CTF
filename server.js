@@ -5,6 +5,7 @@ const app = express();
 const port = process.env.PORT || 3000; 
 const path = require('path');
 const adminKey = process.env.ADMIN_KEY;
+const sessionSecret = process.env.SESSION_SECRET
 
 // This tells the server how to read the form data sent by the player
 app.use(express.urlencoded({ extended: true }));
@@ -19,11 +20,6 @@ const db = new sqlite3.Database('./ctf_database.sqlite', (err) => {
     } else {
         console.log("Connected to the SQLite database.");
     }
-});
-
-app.get('/shout', (req, res) => {
-    console.log("!!! THE SERVER IS AWAKE AND LOGGING !!!");
-    res.send("I heard you!");
 });
 
 // Create the 'players' table if it doesn't exist
@@ -237,7 +233,7 @@ const session = require('express-session');
 
 
 app.use(session({
-    secret: process.env.SESSION_SECRET, 
+    secret: sessionSecret, 
     resave: false,
     saveUninitialized: false
 }));
