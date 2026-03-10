@@ -1,6 +1,7 @@
 require('dotenv').config(); // CRITICAL FIX: Must load before trying to read process.env!
 const express = require('express');
 const app = express();
+app.set('trust proxy', true);
 // Let Render choose the port, default to 3000 for your local Pi
 const port = process.env.PORT || 3000; 
 const path = require('path');
@@ -13,16 +14,18 @@ app.use(express.static('public'));
 
 const sqlite3 = require('sqlite3').verbose();
 
-console.log(`[SYSTEM] Initializing on Port: ${port}`);
-console.log(`[SECURITY] Admin Key Loaded: ${process.env.ADMIN_KEY ? 'YES' : 'NO'}`);
+console.log("==========================================");
+console.log("SERVER BOOT SEQUENCE INITIATED");
+console.log(`TIMESTAMP: ${new Date().toISOString()}`);
+console.log(`PORT: ${process.env.PORT || 3000}`);
+console.log("==========================================");
 
-// --- 2. THE TRAFFIC LOGGER (The "Shout") ---
-// This acts as a 'Global Shout' that logs EVERY hit before the Bouncer can block it
 app.use((req, res, next) => {
-    console.log(`[TRAFFIC] ${req.method} request to: ${req.path} from IP: ${req.ip}`);
+    // Looks for Cloudflare's connecting IP, otherwise falls back to standard IP
+    const realIP = req.headers['cf-connecting-ip'] || req.ip;
+    console.log(`[TRAFFIC] ${req.method} ${req.path} | IP: ${realIP}`);
     next(); 
 });
-
 
 const dbPath = path.join(__dirname, 'ctf_database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
