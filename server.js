@@ -13,6 +13,17 @@ app.use(express.static('public'));
 
 const sqlite3 = require('sqlite3').verbose();
 
+console.log(`[SYSTEM] Initializing on Port: ${port}`);
+console.log(`[SECURITY] Admin Key Loaded: ${process.env.ADMIN_KEY ? 'YES' : 'NO'}`);
+
+// --- 2. THE TRAFFIC LOGGER (The "Shout") ---
+// This acts as a 'Global Shout' that logs EVERY hit before the Bouncer can block it
+app.use((req, res, next) => {
+    console.log(`[TRAFFIC] ${req.method} request to: ${req.path} from IP: ${req.ip}`);
+    next(); 
+});
+
+
 // Create or open the database file
 const db = new sqlite3.Database('./ctf_database.sqlite', (err) => {
     if (err) {
