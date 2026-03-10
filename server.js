@@ -310,6 +310,30 @@ app.get('/game', requireLogin, (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+// Secret route to see all players
+app.get('/master-list', (req, res) => {
+    // Only allow access if the admin key is present
+    if (req.query.admin !== 'jillian') {
+        return res.status(403).send("Access Denied.");
+    }
+
+    db.all("SELECT id, username, score FROM players", [], (err, rows) => {
+        if (err) return res.status(500).send(err.message);
+        
+        // Create a simple HTML table to show the data
+        let html = '<body style="background:#1a102a; color:#ffb74d; font-family:monospace;">';
+        html += '<h1>REGISTERED ENTITIES</h1><table border="1" cellpadding="10">';
+        html += '<tr><th>ID</th><th>Username</th><th>Score</th></tr>';
+        
+        rows.forEach(row => {
+            html += `<tr><td>${row.id}</td><td>${row.username}</td><td>${row.score}</td></tr>`;
+        });
+        
+        html += '</table></body>';
+        res.send(html);
+    });
+});
+
 // Start the engine!
 app.listen(3000, () => {
     console.log("Your CTF server is running at http://localhost:3000");
