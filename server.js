@@ -1,9 +1,10 @@
+require('dotenv').config(); // CRITICAL FIX: Must load before trying to read process.env!
 const express = require('express');
 const app = express();
 // Let Render choose the port, default to 3000 for your local Pi
 const port = process.env.PORT || 3000; 
 const path = require('path');
-require('dotenv').config();
+const adminKey = process.env.ADMIN_KEY;
 
 // This tells the server how to read the form data sent by the player
 app.use(express.urlencoded({ extended: true }));
@@ -20,6 +21,11 @@ const db = new sqlite3.Database('./ctf_database.sqlite', (err) => {
     }
 });
 
+app.get('/shout', (req, res) => {
+    console.log("!!! THE SERVER IS AWAKE AND LOGGING !!!");
+    res.send("I heard you!");
+});
+
 // Create the 'players' table if it doesn't exist
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS players (
@@ -32,7 +38,7 @@ db.serialize(() => {
 });
 
 app.use((req, res, next) => {
-    // Change 'true' to 'false' when you are ready to launch!
+    // Change 'true' to 'false' when ready210
     const isUnderConstruction = true; 
     res.setHeader('ngrok-skip-browser-warning', 'true'); 
     const palette = {
@@ -41,8 +47,7 @@ app.use((req, res, next) => {
         accent: '#e066a3',  
     };
 
-    // Use the Environment Variable here!
-    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY) {
+    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/scores')) {
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
@@ -227,9 +232,10 @@ app.use((req, res, next) => {
         next(); 
     }
 });
+
 const session = require('express-session');
 
-// Use the Environment Variable for the session secret!
+
 app.use(session({
     secret: process.env.SESSION_SECRET, 
     resave: false,
@@ -252,7 +258,8 @@ app.get('/Tasks', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-    res.sendFile(__dirname, 'views' + '/registration.html');
+    // CRITICAL FIX: Repaired broken comma syntax
+    res.sendFile(path.join(__dirname, 'views', 'registration.html'));
 });
 
 app.post('/register', (req, res) => {
@@ -268,7 +275,8 @@ app.post('/register', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.sendFile(__dirname, 'views'+ '/login.html'); 
+    // CRITICAL FIX: Repaired broken comma syntax
+    res.sendFile(path.join(__dirname, 'views', 'login.html')); 
 });
 
 app.post('/login', (req, res) => {
@@ -291,7 +299,8 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/game', requireLogin, (req, res) => {
-    res.sendFile(__dirname, 'views' + '/index.html');
+    // CRITICAL FIX: Repaired broken comma syntax
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 // Secret route to see all players
@@ -317,7 +326,8 @@ app.get('/master-list', (req, res) => {
 });
 
 app.get('/leaderboard', (req, res) => {
-    res.sendFile(__dirname + '/leaderboard.html');
+    // Assuming you didn't move this into the views folder based on your code
+    res.sendFile(path.join(__dirname, 'leaderboard.html'));
 });
 
 app.get('/api/scores', (req, res) => {
