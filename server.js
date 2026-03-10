@@ -37,7 +37,7 @@ app.use((req, res, next) => {
         accent: '#e066a3',  // Purple-pink accent
     };
 
-    if (isUnderConstruction) {
+    if (isUnderConstruction && req.query.admin !== 'jillian') {
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
@@ -86,13 +86,11 @@ app.use((req, res, next) => {
                             </audio>
 
                             <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 25px;">
-                                <!-- Play/Pause Button -->
                                 <div id="music-btn" onclick="togglePlay()" 
                                     style="cursor: pointer; border: 2px solid ${palette.accent}; padding: 10px 20px; border-radius: 30px; color: ${palette.text}; box-shadow: 0 0 10px ${palette.accent}; font-weight: bold; transition: all 0.3s ease;">
                                     ▶ Play Track
                                 </div>
 
-                                <!-- Timer + Seek Bar -->
                                 <div style="display: flex; align-items: center; gap: 15px; width: 100%; justify-content: center;">
                                     <span id="timer">0:00 / 0:00</span>
                                     <input type="range" id="seek-bar" value="0" step="0.1">
@@ -222,12 +220,12 @@ app.use((req, res, next) => {
                                 if (audio.readyState >= 1) {
                                     updateTimerAndSeek();
                                 }
-                            </script>                                       
+                            </script>                                      
 
 
 
                 <div style="font-size: 2em; margin-top: 10px; color: ${palette.accent};">
-                (ㅅ´ ˘ &#96;)  ᶻ 𝘇 𐰁 
+                (ㅅ´ ˘ \`)  ᶻ 𝘇 𐰁 
                 </div>
                 </body>
                 </html>
@@ -236,9 +234,79 @@ app.use((req, res, next) => {
         next(); 
     }
 });
-// Solo pueden llegar aquí si isUnderConstruction == false
-// Gracias al next();
+const session = require('express-session');
+
+// 1. Initialize Session Memory
+app.use(session({
+    secret: 'jill-cyber-secret-key', // This encrypts the cookies
+    resave: false,
+    saveUninitialized: false
+}));
+
+// 2. THE BOUNCER: A custom middleware to check if someone is logged in
+function requireLogin(req, res, next) {
+    if (req.session && req.session.userId) {
+        next(); // They have a valid session badge! Let them in.
+    } else {
+        // Pass the admin key so you don't get locked out by your own WIP screen!
+        res.redirect('/login?admin=jillian'); 
+    }
+}
+
+// --- PAGE AND LOGIC ROUTES ---
+
+// Redirect the base URL straight to the game
 app.get('/', (req, res) => {
+    res.redirect('/game?admin=jillian');
+});
+
+// --- REGISTRATION ---
+app.get('/register', (req, res) => {
+    res.sendFile(__dirname + '/registration.html');
+});
+
+app.post('/register', (req, res) => {
+    const { username, password } = req.body; 
+    const sql = `INSERT INTO players (username, password) VALUES (?, ?)`;
+    
+    db.run(sql, [username, password], function(err) {
+        if (err) {
+            return res.send(`<h1 style="color:red; text-align:center;">Username taken! Hit back.</h1>`);
+        }
+        // If successful, send them to the login page with the admin key!
+        res.redirect('/login?admin=jillian'); 
+    });
+});
+
+// --- LOGIN ---
+app.get('/login', (req, res) => {
+    res.sendFile(__dirname + '/login.html'); 
+});
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    // Look up the player in the database
+    const sql = `SELECT * FROM players WHERE username = ? AND password = ?`;
+    db.get(sql, [username, password], (err, user) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Server error");
+        }
+        if (user) {
+            // SUCCESS! Give them a session badge with their ID and Username
+            req.session.userId = user.id;
+            req.session.username = user.username;
+            res.redirect('/game?admin=jillian'); 
+        } else {
+            // FAILURE! 
+            res.send(`<h1 style="color:red; text-align:center;">Invalid username or password! Hit back.</h1>`);
+        }
+    });
+});
+
+// --- THE MAIN GAME (PROTECTED) ---
+app.get('/game', requireLogin, (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
