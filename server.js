@@ -24,12 +24,12 @@ app.use((req, res, next) => {
 });
 
 
-// Create or open the database file
-const db = new sqlite3.Database('./ctf_database.sqlite', (err) => {
+const dbPath = path.join(__dirname, 'ctf_database.sqlite');
+const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-        console.error("Database opening error: ", err.message);
+        console.error("!!! DB ERROR:", err.message);
     } else {
-        console.log("Connected to the SQLite database.");
+        console.log(">>> [DATABASE] Connected at:", dbPath);
     }
 });
 
