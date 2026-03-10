@@ -1,11 +1,10 @@
 require('dotenv').config(); // CRITICAL FIX: Must load before trying to read process.env!
 const express = require('express');
 const app = express();
-app.set('trust proxy', true);
-// Let Render choose the port, default to 3000 for your local Pi
-const port = process.env.PORT || 3000; 
 const path = require('path');
 const adminKey = process.env.ADMIN_KEY;
+app.set('trust proxy', true);
+const port = process.env.PORT || 3000; 
 const sessionSecret = process.env.SESSION_SECRET
 
 // This tells the server how to read the form data sent by the player
@@ -20,13 +19,21 @@ console.log(`TIMESTAMP: ${new Date().toISOString()}`);
 console.log(`PORT: ${process.env.PORT || 3000}`);
 console.log("==========================================");
 
+// Cookies
+app.use(session({
+    secret: sessionSecret, 
+    resave: false,
+    saveUninitialized: false
+}));
+
+// Looks for Cloudflare's connecting IP, otherwise falls back to standard IP
 app.use((req, res, next) => {
-    // Looks for Cloudflare's connecting IP, otherwise falls back to standard IP
     const realIP = req.headers['cf-connecting-ip'] || req.ip;
     console.log(`[TRAFFIC] ${req.method} ${req.path} | IP: ${realIP}`);
     next(); 
 });
 
+//Initialize the database
 const dbPath = path.join(__dirname, 'ctf_database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
@@ -47,6 +54,7 @@ db.serialize(() => {
     )`);
 });
 
+// Main screen / Check to see if its under maintenance
 app.use((req, res, next) => {
     // Change 'true' to 'false' when ready210
     const isUnderConstruction = true; 
@@ -58,186 +66,7 @@ app.use((req, res, next) => {
     };
 
     if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/scores')) {
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <title>Work in progress</title>
-                <style>
-                    body {
-                        background-color: ${palette.bg};
-                        color: ${palette.text};
-                        font-family: 'Courier New', Courier, monospace;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                        margin: 0;
-                        text-align: center;
-                    }
-                    h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 0 10px ${palette.text}; }
-                    p { font-size: 1.2em; max-width: 600px; line-height: 1.5; color: #fff; }
-                    .hacker-gif {
-                        width: 350px;
-                        max-width: 80%;
-                        border: 2px solid ${palette.text};
-                        box-shadow: 0 0 15px ${palette.accent};
-                        border-radius: 10px;
-                        margin-bottom: 25px;
-                    }
-                    .hacker-font { color: ${palette.accent}; }
-                </style>
-            </head>
-            <body>
-                <img src="/jillWIP.gif" alt="System Admin Working" class="hacker-gif">
-                
-                <h1> ✩₊˚.⋆ WORK IN PROGRESS ⋆⁺₊✧</h1>
-                <p>
-                The <span class="hacker-font">Tokenization & Embeddings</span> team is currently working really hard on getting this site up and running!
-                <br><br>
-                Please be sure to come back later!
-                <br><br>
-                This one goes out to all the pigeons in the world.
-
-                             <audio id="jill-radio" loop preload="auto">
-                            <source src="/Wildlife.mp3" type="audio/mpeg">
-                            </audio>
-
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 25px;">
-                                <div id="music-btn" onclick="togglePlay()" 
-                                    style="cursor: pointer; border: 2px solid ${palette.accent}; padding: 10px 20px; border-radius: 30px; color: ${palette.text}; box-shadow: 0 0 10px ${palette.accent}; font-weight: bold; transition: all 0.3s ease;">
-                                    ▶ Play Track
-                                </div>
-
-                                <div style="display: flex; align-items: center; gap: 15px; width: 100%; justify-content: center;">
-                                    <span id="timer">0:00 / 0:00</span>
-                                    <input type="range" id="seek-bar" value="0" step="0.1">
-                                </div>
-                            </div>
-
-                            <style>
-                                #seek-bar {
-                                    -webkit-appearance: none;
-                                    appearance: none;
-                                    width: 250px;
-                                    height: 4px;
-                                    background: #444;
-                                    border-radius: 2px;
-                                    outline: none;
-                                    cursor: pointer;
-                                    margin: 0;
-                                    padding: 0;
-                                }
-
-                                #seek-bar::-webkit-slider-thumb {
-                                    -webkit-appearance: none;
-                                    appearance: none;
-                                    width: 14px;
-                                    height: 14px;
-                                    border-radius: 50%;
-                                    background: ${palette.text};
-                                    border: 2px solid ${palette.bg};
-                                    box-shadow: 0 0 8px ${palette.accent};
-                                    cursor: pointer;
-                                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                                }
-
-                                #seek-bar::-webkit-slider-thumb:hover {
-                                    transform: scale(1.2);
-                                    box-shadow: 0 0 15px ${palette.accent};
-                                }
-
-                                #seek-bar::-moz-range-thumb {
-                                    width: 14px;
-                                    height: 14px;
-                                    border-radius: 50%;
-                                    background: ${palette.text};
-                                    border: 2px solid ${palette.bg};
-                                    box-shadow: 0 0 8px ${palette.accent};
-                                    cursor: pointer;
-                                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                                }
-
-                                #seek-bar::-moz-range-thumb:hover {
-                                    transform: scale(1.2);
-                                    box-shadow: 0 0 15px ${palette.accent};
-                                }
-
-                                #timer {
-                                    font-family: monospace;
-                                    color: ${palette.text};
-                                    min-width: 100px;
-                                    text-align: right;
-                                }
-                            </style>
-
-                            <script>
-                                const audio = document.getElementById('jill-radio');
-                                const btn = document.getElementById('music-btn');
-                                const seekBar = document.getElementById('seek-bar');
-                                const timer = document.getElementById('timer');
-
-                                const accentColor = '${palette.accent}';
-                                const textColor = '${palette.text}';
-
-                                function formatTime(seconds) {
-                                    if (isNaN(seconds) || seconds < 0) return '0:00';
-                                    const mins = Math.floor(seconds / 60);
-                                    const secs = Math.floor(seconds % 60);
-                                    return mins + ':' + (secs < 10 ? '0' + secs : secs);
-                                }
-
-                                function updateTimerAndSeek() {
-                                    if (audio.duration && !isNaN(audio.duration)) {
-                                        const current = formatTime(audio.currentTime);
-                                        const total = formatTime(audio.duration);
-                                        timer.textContent = current + ' / ' + total;
-                                        
-                                        const percent = (audio.currentTime / audio.duration) * 100;
-                                        seekBar.value = percent;
-                                    } else {
-                                        timer.textContent = '0:00 / 0:00';
-                                    }
-                                }
-
-                                function togglePlay() {
-                                    if (audio.paused) {
-                                        audio.play();
-                                        btn.innerHTML = '₊⊹˚♬ (▶) Playing... ♪⊹˚';
-                                        btn.style.boxShadow = '0 0 25px ' + accentColor;
-                                        btn.style.color = accentColor;
-                                    } else {
-                                        audio.pause();
-                                        btn.innerHTML = '( ❚❚ ) Paused';
-                                        btn.style.boxShadow = '0 0 10px ' + accentColor;
-                                        btn.style.color = textColor;
-                                    }
-                                }
-
-                                audio.ontimeupdate = updateTimerAndSeek;
-                                audio.onloadedmetadata = updateTimerAndSeek;
-
-                                seekBar.oninput = function() {
-                                    if (audio.duration && !isNaN(audio.duration)) {
-                                        const newTime = (seekBar.value / 100) * audio.duration;
-                                        audio.currentTime = newTime;
-                                        updateTimerAndSeek();
-                                    }
-                                };
-
-                                if (audio.readyState >= 1) {
-                                    updateTimerAndSeek();
-                                }
-                            </script>                                      
-
-                <div style="font-size: 2em; margin-top: 10px; color: ${palette.accent};">
-                (ㅅ´ ˘ \`)  ᶻ 𝘇 𐰁 
-                </div>
-                </body>
-                </html>
-        `);
+       res.sendFile(path.join(__dirname, 'views', 'wip.html'));
     } else {
         next(); 
     }
@@ -245,30 +74,23 @@ app.use((req, res, next) => {
 
 const session = require('express-session');
 
-
-app.use(session({
-    secret: sessionSecret, 
-    resave: false,
-    saveUninitialized: false
-}));
-
-// THE BOUNCER
+// Needed login to go through
 function requireLogin(req, res, next) {
     if (req.session && req.session.userId) {
         next(); 
     } else {
-        res.redirect(`/login?admin=${process.env.ADMIN_KEY}`); 
+        res.redirect('/login'); 
     }
 }
 
-// --- PAGE AND LOGIC ROUTES ---
-
+// Tasks / Main menu
 app.get('/Tasks', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+
+//Registration menu
 app.get('/register', (req, res) => {
-    // CRITICAL FIX: Repaired broken comma syntax
     res.sendFile(path.join(__dirname, 'views', 'registration.html'));
 });
 
@@ -335,7 +157,7 @@ app.get('/master-list', (req, res) => {
     });
 });
 
-app.get('/leaderboard', (req, res) => {
+app.get(__dirname, 'views', '/leaderboard', (req, res) => {
     // Assuming you didn't move this into the views folder based on your code
     res.sendFile(path.join(__dirname, 'leaderboard.html'));
 });

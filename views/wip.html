@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Work in progress</title>
+    <style>
+        body {
+            background-color: #1a102a;
+            color: #ffb74d;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 0 10px #ffb74d; }
+        p { font-size: 1.2em; max-width: 600px; line-height: 1.5; color: #fff; }
+        .jill-gif {
+            width: 350px;
+            max-width: 80%;
+            border: 2px solid #ffb74d;
+            box-shadow: 0 0 15px #e066a3;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        .font { color: #e066a3; }
+        
+        #seek-bar {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 250px;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+            margin: 0;
+            padding: 0;
+        }
+
+        #seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffb74d;
+            border: 2px solid #1a102a;
+            box-shadow: 0 0 8px #e066a3;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #seek-bar::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px #e066a3;
+        }
+
+        #seek-bar::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffb74d;
+            border: 2px solid #1a102a;
+            box-shadow: 0 0 8px #e066a3;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #seek-bar::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px #e066a3;
+        }
+
+        #timer {
+            font-family: monospace;
+            color: #ffb74d;
+            min-width: 100px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <img src="/jillWIP.gif" alt="System Admin Working" class="jill-gif">
+    
+    <h1> ✩₊˚.⋆ WORK IN PROGRESS ⋆⁺₊✧</h1>
+    <p>
+    The <span class="font">Tokenization & Embeddings</span> team is currently working really hard on getting this site up and running!
+    <br><br>
+    Please be sure to come back later!
+    <br><br>
+    This one goes out to all the pigeons in the world.
+    </p>
+
+    <audio id="jill-radio" loop preload="auto">
+        <source src="/Wildlife.mp3" type="audio/mpeg">
+    </audio>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 25px;">
+        <div id="music-btn" onclick="togglePlay()" 
+            style="cursor: pointer; border: 2px solid #e066a3; padding: 10px 20px; border-radius: 30px; color: #ffb74d; box-shadow: 0 0 10px #e066a3; font-weight: bold; transition: all 0.3s ease;">
+            ▶ Play Track
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 15px; width: 100%; justify-content: center;">
+            <span id="timer">0:00 / 0:00</span>
+            <input type="range" id="seek-bar" value="0" step="0.1">
+        </div>
+    </div>
+
+    <script>
+        const audio = document.getElementById('jill-radio');
+        const btn = document.getElementById('music-btn');
+        const seekBar = document.getElementById('seek-bar');
+        const timer = document.getElementById('timer');
+
+        const accentColor = '#e066a3';
+        const textColor = '#ffb74d';
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' + secs : secs);
+        }
+
+        function updateTimerAndSeek() {
+            if (audio.duration && !isNaN(audio.duration)) {
+                const current = formatTime(audio.currentTime);
+                const total = formatTime(audio.duration);
+                timer.textContent = current + ' / ' + total;
+                
+                const percent = (audio.currentTime / audio.duration) * 100;
+                seekBar.value = percent;
+            } else {
+                timer.textContent = '0:00 / 0:00';
+            }
+        }
+
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play();
+                btn.innerHTML = '₊⊹˚♬ (▶) Playing... ♪⊹˚';
+                btn.style.boxShadow = '0 0 25px ' + accentColor;
+                btn.style.color = accentColor;
+            } else {
+                audio.pause();
+                btn.innerHTML = '( ❚❚ ) Paused';
+                btn.style.boxShadow = '0 0 10px ' + accentColor;
+                btn.style.color = textColor;
+            }
+        }
+
+        audio.ontimeupdate = updateTimerAndSeek;
+        audio.onloadedmetadata = updateTimerAndSeek;
+
+        seekBar.oninput = function() {
+            if (audio.duration && !isNaN(audio.duration)) {
+                const newTime = (seekBar.value / 100) * audio.duration;
+                audio.currentTime = newTime;
+                updateTimerAndSeek();
+            }
+        };
+
+        if (audio.readyState >= 1) {
+            updateTimerAndSeek();
+        }
+    </script>                                      
+
+    <div style="font-size: 2em; margin-top: 10px; color: #e066a3;">
+    (ㅅ´ ˘ `)  ᶻ 𝘇 𐰁 
+    </div>
+</body>
+</html>
