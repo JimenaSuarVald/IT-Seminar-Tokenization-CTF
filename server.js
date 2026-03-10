@@ -67,7 +67,7 @@ app.use((req, res, next) => {
 
     if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/scores')) {
        res.sendFile(path.join(__dirname, 'views', 'wip.html'));
-    } else {
+    } else  {
         next(); 
     }
 });
@@ -82,6 +82,14 @@ function requireLogin(req, res, next) {
         res.redirect('/login'); 
     }
 }
+
+// MAIN ENTRANCE
+app.get('/', (req, res) => {
+    // If they used the admin key, carry it over to the login page
+    requireLogin;
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+    
+});
 
 // Tasks / Main menu
 app.get('/Tasks', (req, res) => {
@@ -168,6 +176,57 @@ app.get('/api/scores', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows); 
     });
+});
+
+// Remote game control for time
+let gameState = {
+    isRunning: false,
+    endTime: null,
+    durationSeconds: 7200, // 2 hours
+    unlockedTasks: 1 // Start with only 1 task available
+};
+
+app.get('/admin-panel', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Go away, bot!");
+    res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
+// --- PLAYER API (How the dashboard gets the data) ---
+app.get('/api/state', (req, res) => {
+    // Calculate remaining time on the fly
+    let timeRemaining = 0;
+    if (gameState.isRunning && gameState.endTime) {
+        timeRemaining = Math.max(0, Math.floor((gameState.endTime - Date.now()) / 1000));
+    }
+    
+    res.json({
+        timeRemaining: timeRemaining,
+        isRunning: gameState.isRunning,
+        unlockedTasks: gameState.unlockedTasks
+    });
+});
+
+// --- ADMIN CONTROLS (Your remote control) ---
+app.get('/admin/start-timer', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+    
+    gameState.isRunning = true;
+    // Set the end time to exactly 2 hours from THIS moment
+    gameState.endTime = Date.now() + (gameState.durationSeconds * 1000); 
+    res.send(`<h1>Timer Started! Ends at ${new Date(gameState.endTime).toLocaleTimeString()}</h1><a href="/?admin=${process.env.ADMIN_KEY}">Back to Game</a>`);
+});
+
+app.get('/admin/set-tasks', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+    
+    // Grab the number from the URL, e.g., /admin/set-tasks?admin=jillian&count=3
+    const newCount = parseInt(req.query.count);
+    if (!isNaN(newCount)) {
+        gameState.unlockedTasks = newCount;
+        res.send(`<h1>Tasks Unlocked: ${newCount}</h1><a href="/?admin=${process.env.ADMIN_KEY}">Back to Game</a>`);
+    } else {
+        res.send("Please provide a count, e.g., &count=5");
+    }
 });
 
 app.listen(port, () => {

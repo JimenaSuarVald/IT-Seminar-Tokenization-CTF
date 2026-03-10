@@ -1,8 +1,296 @@
-<h1>Welcome to my CTF!</h1>
-<p>Challenge 1: I left the flag hidden in the backend code. Can you guess it?</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Dashboard</title>
+    <style>
+        /* --- CORE PALETTE & TYPOGRAPHY --- */
+        :root {
+            --bg-dark: #1a102a;
+            --text-main: #ffb74d;
+            --accent: #e066a3;
+            --panel-bg: #2a1b40;
+            --sidebar-width: 250px;
+        }
 
-<form action="/submit-flag" method="POST">
-    <input type="text" name="flag" placeholder="Enter flag here">
-    <button type="submit">Submit Flag</button>
-</form>
-<h1>BLAH BLAH BLAH , or sum like that!</h1>
+        body {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--panel-bg);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+            position: absolute;
+            height: 100%;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+            display: flex;       
+            flex-direction: column; 
+            height: 100%;         
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 20px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 1.2em;
+            transition: background-color 0.2s, padding-left 0.2s;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: rgba(224, 102, 163, 0.2);
+            padding-left: 25px;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Forces the sign-out button to the very bottom */
+        .sign-out {
+            margin-top: auto;
+            background-color: rgba(224, 102, 163, 0.1);
+            width: 100%;
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+            width: 100%;
+        }
+
+        /* --- TOP NAVBAR --- */
+        .topbar {
+            height: 60px;
+            background-color: var(--panel-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            font-size: 1.5em;
+            cursor: pointer;
+            border-radius: 5px;
+            padding: 5px 10px;
+            transition: all 0.2s;
+        }
+
+        .menu-toggle:hover {
+            background-color: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .timer {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 8px var(--accent);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+        }
+
+        .user-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--text-main);
+            object-fit: cover;
+        }
+
+        /* --- TASK GRID --- */
+        .task-container {
+            padding: 30px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .task-card {
+            background-color: var(--panel-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 183, 77, 0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(224, 102, 163, 0.4);
+            border-color: var(--accent);
+        }
+
+        .task-image {
+            width: 100%;
+            height: 150px;
+            background-color: #000;
+            object-fit: cover;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .task-info {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .task-info h3 {
+            margin: 0 0 10px 0;
+            color: #fff;
+        }
+
+        .task-info p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar" id="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/Tasks">Tasks</a></li>
+            <li><a href="/documentation">Documentation</a></li>
+            <li><a href="/leaderboard">Leaderboards</a></li>
+            <li><a href="/credits">Credits</a></li>
+            <li class="sign-out"><a href="/login">Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div class="timer" id="countdown-timer">00:00:00</div>
+            </div>
+            
+            <div class="topbar-right">
+                <img src="/usericon.png" alt="User Icon" class="user-icon" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZiNzRkIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOCIgcj0iNCIvPjxwYXRoIGQ9Ik0yMCAyMWMtMi00LTQtNi04LTZzLTYgMi04IDZWMjFoMTZ2LTF6Ii8+PC9zdmc+'">
+                <span>Account</span>
+            </div>
+        </header>
+
+        <main class="task-container" id="tasks-grid">
+            </main>
+
+    </div>
+
+    <script>
+    // --- 1. SIDEBAR ANIMATION ---
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // --- 2. SERVER SYNC (The "Radar") ---
+    let currentUnlocked = 0;
+
+    async function fetchGameState() {
+        try {
+            const response = await fetch('/api/state');
+            const state = await response.json();
+
+            updateTimer(state.timeRemaining, state.isRunning);
+            
+            // Only redraw the grid if the admin unlocked a new task!
+            if (state.unlockedTasks !== currentUnlocked) {
+                renderTasks(state.unlockedTasks);
+                currentUnlocked = state.unlockedTasks;
+            }
+        } catch (error) {
+            console.error("Lost connection to Raspberry Pi...");
+        }
+    }
+
+    // --- 3. DYNAMIC TASK GENERATION ---
+    function renderTasks(count) {
+        const tasksGrid = document.getElementById('tasks-grid');
+        tasksGrid.innerHTML = ''; // Clear the board
+
+        for (let i = 1; i <= count; i++) {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.innerHTML = `
+                <img src="/task-placeholder.png" class="task-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMyMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlIHBlbmRpbmc8L3RleHQ+PC9zdmc+'">
+                <div class="task-info">
+                    <h3>Challenge ${i}</h3>
+                    <p>Decrypt the payload to retrieve the flag.</p>
+                </div>
+            `;
+            tasksGrid.appendChild(card);
+        }
+    }
+
+    // --- 4. TIMER DISPLAY ---
+    function updateTimer(secondsRemaining, isRunning) {
+        const timerDisplay = document.getElementById('countdown-timer');
+        
+        if (!isRunning) {
+            timerDisplay.innerText = "WAITING FOR ADMIN...";
+            timerDisplay.style.color = "var(--text-main)";
+            return;
+        }
+
+        if (secondsRemaining <= 0) {
+            timerDisplay.innerText = "TIME UP!";
+            timerDisplay.style.color = "red";
+            return;
+        }
+
+        const hours = Math.floor(secondsRemaining / 3600);
+        const minutes = Math.floor((secondsRemaining % 3600) / 60);
+        const seconds = secondsRemaining % 60;
+
+        timerDisplay.innerText = 
+            String(hours).padStart(2, '0') + ':' + 
+            String(minutes).padStart(2, '0') + ':' + 
+            String(seconds).padStart(2, '0');
+    }
+
+    // Ping the server every 1 second to stay perfectly synchronized
+    setInterval(fetchGameState, 1000);
+    fetchGameState(); 
+</script>
+</body>
+</html>
