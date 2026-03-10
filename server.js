@@ -134,9 +134,9 @@ app.post('/login', (req, res) => {
         if (user) {
             req.session.userId = user.id;
             req.session.username = user.username;
-            res.redirect(`/game?admin=${process.env.ADMIN_KEY}`); 
+            res.redirect(`/`); 
         } else {
-            res.send(`<h1 style="color:red; text-align:center;">Invalid username or password! Hit back.</h1>`);
+            res.send(`<h1 style="color:red; text-align:center;">Invalid username or password!</h1>`);
         }
     });
 });
