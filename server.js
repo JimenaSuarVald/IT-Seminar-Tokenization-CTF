@@ -163,9 +163,9 @@ app.get('/master-list', (req, res) => {
     });
 });
 
-// THE BROKEN CODE
-app.get(__dirname, 'views', '/leaderboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'leaderboard.html'));
+// THE FIXED CODE
+app.get('/leaderboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'leaderboard.html'));
 });
 
 app.get('/api/scores', (req, res) => {
