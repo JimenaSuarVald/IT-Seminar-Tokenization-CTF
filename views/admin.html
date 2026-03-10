@@ -48,16 +48,16 @@
 <body>
 
     <div class="container">
-        <h1>🛰️ MISSION CONTROL</h1>
-
+        <h1>MISSION CONTROL</h1>
         <div class="card">
             <h2>GAME CLOCK</h2>
             <hr>
-            <button onclick="location.href='/admin/start-timer?admin=jillian'">&#128640; Start 2-Hour Timer</button>
+            <button id="start-btn" onclick="startTimer()"> Start 2-Hour Timer</button>
+            <p id="timer-status" style="margin-top: 15px; font-weight: bold; color: var(--accent);"></p>
         </div>
 
         <div class="card">
-            <h2>TASK LOCKER</h2>
+            <h2>TASK UNLOCKER</h2>
             <hr>
             <div class="inline-text">
                 Unlock up to: <input type="number" id="taskCount" class="inline-input" value="1" min="1"> tasks
@@ -65,49 +65,137 @@
             <button onclick="unlock()"> Update Active Tasks</button>
         </div>
 
-        <div class="card">
-            <h2>UPLOAD NEW TASK</h2>
-            <hr>
-            <form action="/admin/upload-task" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="adminKey" value="jillian">
-                
-                <div class="form-group">
-                    <label>Task Name</label>
-                    <input type="text" name="taskName" placeholder="e.g., SQL Injection 101" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea name="taskDesc" rows="3" placeholder="Explain the challenge..." required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>Estimated Time Required</label>
-                    <input type="text" name="taskTime" placeholder="e.g., 15 minutes" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Task Image</label>
-                    <input type="file" name="taskImage" accept="image/*" required>
-                </div>
-                
-                <button type="submit">➕ Save Task to Database</button>
-            </form>
-        </div>
+    <div class="card">
+            
+        <h2>UPLOAD NEW TASK</h2>
+        <hr>
+        <form id="uploadForm" onsubmit="submitTask(event)">
+            <input type="hidden" name="adminKey" value="jillian">
+            
+                    <div class="form-group">
+                        <label>Task Name</label>
+                        <input type="text" name="taskName" placeholder="e.g., SQL Injection 101" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="taskDesc" rows="3" placeholder="Explain the challenge..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Estimated Time Required</label>
+                        <input type="text" name="taskTime" placeholder="e.g., 15 minutes" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Task Image</label>
+                        <input type="file" name="taskImage" accept="image/*" required>
+                    </div>
+                    
+                    <button type="submit" id="upload-btn">➕ Save Task to Server</button>
+                    <p id="upload-status" style="margin-top: 15px; font-weight: bold; color: var(--accent);"></p>
+                </form>
+            </div>
 
         <div class="card" style="border-color: #d32f2f;">
             <h2 style="color: #d32f2f; text-shadow: none;">DANGER ZONE</h2>
             <hr style="background: linear-gradient(90deg, transparent, #d32f2f, transparent);">
             <p style="margin-bottom: 20px;">Manage or delete existing tasks from the server.</p>
-            <button class="danger-btn" onclick="location.href='/admin/manage-tasks?admin=jillian'">🗑️ Open Task Manager</button>
+            <button class="danger-btn" onclick="location.href='/supersecretcyber-panel/manage-tasks?admin=jillian'">🗑️ Open Task Manager</button>
         </div>
     </div>
 
     <script>
         function unlock() {
             const count = document.getElementById('taskCount').value;
-            location.href = `/admin/set-tasks?admin=jillian&count=${count}`;
+            location.href = `/supersecretcyber-panel/set-tasks?admin=jillian&count=${count}`;
         }
     </script>
+
+
+    <script>
+    // --- SILENT TASK UPLOAD ---
+    async function submitTask(event) {
+    // 1. Stop the browser from redirecting!
+    event.preventDefault(); 
+    
+    const form = document.getElementById('uploadForm');
+    const btn = document.getElementById('upload-btn');
+    const statusText = document.getElementById('upload-status');
+    
+    // 2. Package all the text and the image file together
+    const formData = new FormData(form);
+    
+    // Visual feedback
+    btn.innerText = "Uploading...";
+    btn.disabled = true;
+    statusText.innerText = "";
+
+    try {
+        // 3. Send the package to the Raspberry Pi
+        const response = await fetch('/supersecretcyber-panel/upload-task', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            btn.innerText = "✔ UPLOAD COMPLETE";
+            btn.style.backgroundColor = "#4caf50";
+            btn.style.boxShadow = "0 0 15px #4caf50";
+            statusText.innerText = "Task successfully added to the database!";
+            form.reset(); // Clear the inputs for the next task
+            
+            // Reset button color after 3 seconds
+            setTimeout(() => {
+                btn.innerText = "➕ Save Task to Server";
+                btn.style.backgroundColor = "var(--accent)";
+                btn.style.boxShadow = "0 0 15px var(--accent)";
+                btn.disabled = false;
+            }, 3000);
+        } else {
+            statusText.innerText = "Error: Could not save task.";
+            btn.innerText = "Try Again";
+            btn.disabled = false;
+        }
+    } catch (error) {
+        statusText.innerText = "Critical Error: Lost connection.";
+        btn.disabled = false;
+    }
+}
+
+    </script>
+    <script>
+    // --- TIMER CONTROL ---
+    async function startTimer() {
+        const btn = document.getElementById('start-btn');
+        const statusText = document.getElementById('timer-status');
+    
+        btn.innerText = "Initiating...";
+        btn.disabled = true; 
+
+        try {
+            const response = await fetch('/supersecretcyber-panel/start-timer?admin=jillian');
+            
+            if (response.ok) {
+                btn.innerText = "✔ TIMER RUNNING";
+                btn.style.backgroundColor = "#4caf50"; 
+                btn.style.boxShadow = "0 0 15px #4caf50";
+                statusText.innerText = "Server clock engaged! All player dashboards are now ticking.";
+            } else {
+                statusText.innerText = "Error: Access Denied or Server Error.";
+                btn.innerText = "Try Again";
+                btn.disabled = false;
+            }
+        } catch (error) {
+            statusText.innerText = "Critical Error: Lost connection to Raspberry Pi.";
+            btn.disabled = false;
+        }
+    }
+
+    function unlock() {
+        const count = document.getElementById('taskCount').value;
+        location.href = `/supersecretcyber-panel/set-tasks?admin=jillian&count=${count}`;
+    }
+</script>
 </body>
 </html>

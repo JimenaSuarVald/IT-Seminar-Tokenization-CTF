@@ -184,6 +184,13 @@
             font-size: 0.9em;
             color: #ccc;
         }
+
+        .locked-task {
+            filter: grayscale(100%) brightness(50%);
+            pointer-events: none; /* Physically prevents clicking */
+            opacity: 0.6;
+        }
+        
     </style>
 </head>
 <body>

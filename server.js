@@ -7,6 +7,9 @@ const session = require('express-session');
 const adminKey = process.env.ADMIN_KEY;
 const port = process.env.PORT || 3000; 
 const sessionSecret = process.env.SESSION_SECRET
+const multer = require('multer');
+const fs = require('fs');
+const uploadDir = path.join(__dirname, 'public', 'uploads');
 
 app.set('trust proxy', true);
 
@@ -22,6 +25,22 @@ console.log(`TIMESTAMP: ${new Date().toISOString()}`);
 console.log(`PORT: ${process.env.PORT || 3000}`);
 console.log("==========================================");
 
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+// Tell multer how to name the files so they don't overwrite each other
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        // Creates a unique name like: task-1709948271.png
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'task-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
 
 
 // Looks for Cloudflare's connecting IP, otherwise falls back to standard IP
@@ -41,7 +60,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
-// Create the 'players' table if it doesn't exist
+// Create the 'players and tasks' table if it doesn't exist
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS players (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,6 +68,14 @@ db.serialize(() => {
         password TEXT,
         score INTEGER DEFAULT 0,
         found_flags TEXT DEFAULT ''
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        description TEXT,
+        estimated_time TEXT,
+        image_url TEXT
     )`);
 });
 
@@ -205,7 +232,7 @@ app.get('/api/state', (req, res) => {
 });
 
 // --- ADMIN CONTROLS (Your remote control) ---
-app.get('/admin/start-timer', (req, res) => {
+app.get('/supersecretcyber-panel/start-timer', (req, res) => {
     if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
     
     gameState.isRunning = true;
@@ -214,17 +241,29 @@ app.get('/admin/start-timer', (req, res) => {
     res.send(`<h1>Timer Started! Ends at ${new Date(gameState.endTime).toLocaleTimeString()}</h1><a href="/?admin=${process.env.ADMIN_KEY}">Back to Game</a>`);
 });
 
-app.get('/admin/set-tasks', (req, res) => {
-    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
-    
-    // Grab the number from the URL, e.g., /admin/set-tasks?admin=jillian&count=3
-    const newCount = parseInt(req.query.count);
-    if (!isNaN(newCount)) {
-        gameState.unlockedTasks = newCount;
-        res.send(`<h1>Tasks Unlocked: ${newCount}</h1><a href="/?admin=${process.env.ADMIN_KEY}">Back to Game</a>`);
-    } else {
-        res.send("Please provide a count, e.g., &count=5");
+app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req, res) => {
+    // 1. Verify it's actually you
+    if (req.body.adminKey !== process.env.ADMIN_KEY) {
+        return res.status(403).send("Access Denied.");
     }
+
+    // 2. Grab the text data from the form
+    const { taskName, taskDesc, taskTime } = req.body;
+    
+    // 3. Figure out the URL for the image we just saved
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : '/task-placeholder.png';
+
+    // 4. Save everything to the database
+    const sql = `INSERT INTO tasks (name, description, estimated_time, image_url) VALUES (?, ?, ?, ?)`;
+    db.run(sql, [taskName, taskDesc, taskTime, imageUrl], function(err) {
+        if (err) {
+            console.error("Database error while saving task:", err.message);
+            return res.status(500).send("Failed to save task to database.");
+        }
+        
+        console.log(`[SYSTEM] New task uploaded: ${taskName}`);
+        res.status(200).send("Upload successful");
+    });
 });
 
 app.listen(port, () => {
