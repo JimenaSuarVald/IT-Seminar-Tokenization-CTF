@@ -334,6 +334,20 @@ app.get('/master-list', (req, res) => {
     });
 });
 
+// 1. Show the Leaderboard Page (Publicly accessible)
+app.get('/leaderboard', (req, res) => {
+    res.sendFile(__dirname + '/leaderboard.html');
+});
+
+// 2. The Data API (The HTML file calls this every 5 seconds)
+app.get('/api/scores', (req, res) => {
+    const sql = `SELECT username, score FROM players ORDER BY score DESC`;
+    db.all(sql, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows); 
+    });
+});
+
 // Start the engine!
 app.listen(3000, () => {
     console.log("Your CTF server is running at http://localhost:3000");

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CTF | Global Rankings</title>
+    <style>
+        body { background-color: #1a102a; color: #ffb74d; font-family: 'Courier New', monospace; padding: 50px; text-align: center; }
+        table { width: 80%; margin: 20px auto; border-collapse: collapse; border: 2px solid #e066a3; box-shadow: 0 0 15px #e066a3; background: rgba(0,0,0,0.3); }
+        th { background-color: #e066a3; color: white; padding: 15px; text-transform: uppercase; }
+        td { padding: 12px; border: 1px solid #444; }
+        tr:nth-child(even) { background-color: rgba(224, 102, 163, 0.1); }
+        h1 { text-shadow: 0 0 10px #ffb74d; }
+        .status { font-size: 0.8em; color: #e066a3; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1> GLOBAL RANKINGS </h1>
+    <div id="leaderboard-container">
+        <p>Connecting to the grid...</p>
+    </div>
+    <p class="status">● REAL-TIME UPDATE ACTIVE</p>
+
+    <script>
+        function updateLeaderboard() {
+            // Fetch the data from our new API route
+            fetch('/api/scores')
+                .then(response => response.json())
+                .then(data => {
+                    let html = `<table><tr><th>Rank</th><th>Username</th><th>Score</th></tr>`;
+                    data.forEach((player, index) => {
+                        html += `<tr>
+                            <td>${index + 1}</td>
+                            <td>${player.username}</td>
+                            <td>${player.score} pts</td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                    document.getElementById('leaderboard-container').innerHTML = html;
+                })
+                .catch(err => console.error('Error fetching scores:', err));
+        }
+
+        // Update once immediately, then every 5 seconds
+        updateLeaderboard();
+        setInterval(updateLeaderboard, 5000);
+    </script>
+</body>
+</html>
