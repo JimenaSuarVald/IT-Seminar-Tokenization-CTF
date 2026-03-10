@@ -2,69 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CTF | System Registration</title>
+    <title>CTF | System Login</title>
     <style>
-        body {
-            background-color: #1a102a;
-            color: #ffb74d;
-            font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .form-container {
-            border: 2px solid #e066a3;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px #e066a3;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        h2 { text-shadow: 0 0 10px #ffb74d; margin-bottom: 30px; }
-        input {
-            width: 80%;
-            padding: 12px;
-            margin-bottom: 20px;
-            background-color: #1a102a;
-            border: 1px solid #ffb74d;
-            color: #ffb74d;
-            font-family: 'Courier New', Courier, monospace;
-            border-radius: 5px;
-        }
-        input:focus { outline: none; border-color: #e066a3; box-shadow: 0 0 10px #e066a3; }
-        button {
-            background-color: #e066a3;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            font-family: 'Courier New', Courier, monospace;
-            transition: all 0.3s ease;
-        }
-        button:hover { box-shadow: 0 0 15px #e066a3; transform: scale(1.05); }
-        .links { margin-top: 20px; font-size: 0.9em; }
-        a { color: #e066a3; text-decoration: none; }
-        a:hover { text-shadow: 0 0 5px #e066a3; }
+        /* Keep your existing CSS here (background, colors, etc.) */
+        body { background-color: #1a102a; color: #ffb74d; font-family: 'Courier New', monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
+        .form-container { border: 2px solid #e066a3; padding: 40px; border-radius: 15px; box-shadow: 0 0 20px #e066a3; background-color: rgba(0, 0, 0, 0.5); }
+        input { width: 80%; padding: 12px; margin-bottom: 20px; background-color: #1a102a; border: 1px solid #ffb74d; color: #ffb74d; border-radius: 5px; }
+        button { background-color: #e066a3; color: white; border: none; padding: 15px 30px; border-radius: 30px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="form-container">
-        <h2> → REGISTER </h2>
+        <h2> → SYSTEM LOGIN </h2>
         
-        <form action="/register?admin=jillian" method="POST">
-            <input type="text" name="username" placeholder="Choose Username" required><br>
-            <input type="password" name="password" placeholder="Choose Password" required><br>
-            <button type="submit">Register</button>
+        <form action="/login?admin=jillian" method="POST">
+            <input type="text" name="username" placeholder="Enter Username" required><br>
+            <input type="password" name="password" placeholder="Enter Password" required><br>
+            <button type="submit">ACCESS GRID</button>
         </form>
 
-        <div class="links">
-            <p>Already registered? <a href="/login?admin=jillian">Login here</a></p>
+        <div style="margin-top: 20px;">
+            <p>New entity? <a href="/register?admin=jillian" style="color: #e066a3;">Register here</a></p>
         </div>
     </div>
 
