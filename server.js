@@ -126,6 +126,18 @@ app.get('/Tasks', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+// --- DASHBOARD API: GET ALL TASKS ---
+app.get('/api/tasks', requireLogin, (req, res) => {
+    db.all("SELECT id, name, description, estimated_time, image_url FROM tasks", [], (err, rows) => {
+        if (err) {
+            console.error("Dashboard Fetch Error:", err.message);
+            return res.status(500).json([]);
+        }
+        // This sends the rows from SQLite back to your index.html
+        res.json(rows);
+    });
+});
+
 app.get('/api/task/:id', requireLogin, (req, res) => {
     const taskId = req.params.id;
     db.get("SELECT * FROM tasks WHERE id = ?", [taskId], (err, row) => {
