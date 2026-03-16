@@ -273,29 +273,30 @@ app.get('/supersecretcyber-panel/start-timer', (req, res) => {
 
 app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req, res) => {
 
+    // 1. Check BOTH the form body and the URL for the admin key
     const providedKey = req.body.adminKey || req.query.admin;
 
     if (providedKey !== process.env.ADMIN_KEY) {
-        console.log(`[SECURITY] Blocked upload attempt! Key provided: ${providedKey}`);
-        return res.status(403).send("SHOO SHOO HACKER!.");
+        console.log(`[SECURITY] Blocked upload attempt. Key provided: ${providedKey}`);
+        return res.status(403).send("SHOO SHOO HACKER!");
     }
 
-    // 2. Grab the text data from the form
+    // 2. Extract text data
     const { taskName, taskDesc, taskTime } = req.body;
     
-    // 3. Figure out the URL for the image we just saved
+    // 3. Set the image path
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : '/task-placeholder.png';
 
-    // 4. Save everything to the database
+    // 4. Save to Database
     const sql = `INSERT INTO tasks (name, description, estimated_time, image_url) VALUES (?, ?, ?, ?)`;
     db.run(sql, [taskName, taskDesc, taskTime, imageUrl], function(err) {
         if (err) {
-            console.error("Database error while saving task:", err.message);
-            return res.status(500).send("Failed to save task to database.");
+            console.error("DB Error:", err.message);
+            return res.status(500).send("Database failure.");
         }
         
-        console.log(`[SYSTEM] New task uploaded: ${taskName}`);
-        res.status(200).send("Upload successful");
+        console.log(`[SYSTEM] SUCCESS! Task "${taskName}" added to ID: ${this.lastID}`);
+        res.status(200).send("Task saved successfully!");
     });
 });
 
