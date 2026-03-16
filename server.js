@@ -273,29 +273,27 @@ app.get('/supersecretcyber-panel/start-timer', (req, res) => {
 
 app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req, res) => {
 
-    // 1. Check BOTH the form body and the URL for the admin key
+    // 1. Get the key from the Form OR the URL (just in case)
     const providedKey = req.body.adminKey || req.query.admin;
 
+    // DEBUG: This will show up in your 'pm2 logs'
+    console.log(`[AUTH CHECK] Provided: "${providedKey}" | Expected: "${process.env.ADMIN_KEY}"`);
+
     if (providedKey !== process.env.ADMIN_KEY) {
-        console.log(`[SECURITY] Blocked upload attempt. Key provided: ${providedKey}`);
-        return res.status(403).send("SHOO SHOO HACKER!");
+        console.log("!!! REJECTED: Keys do not match.");
+        return res.status(403).send("SHOO SHOO HACKER!.");
     }
 
-    // 2. Extract text data
     const { taskName, taskDesc, taskTime } = req.body;
-    
-    // 3. Set the image path
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : '/task-placeholder.png';
 
-    // 4. Save to Database
     const sql = `INSERT INTO tasks (name, description, estimated_time, image_url) VALUES (?, ?, ?, ?)`;
     db.run(sql, [taskName, taskDesc, taskTime, imageUrl], function(err) {
         if (err) {
             console.error("DB Error:", err.message);
             return res.status(500).send("Database failure.");
         }
-        
-        console.log(`[SYSTEM] SUCCESS! Task "${taskName}" added to ID: ${this.lastID}`);
+        console.log(`[SYSTEM] SUCCESS! Task "${taskName}" added to Database.`);
         res.status(200).send("Task saved successfully!");
     });
 });
