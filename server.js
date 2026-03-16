@@ -79,6 +79,13 @@ db.serialize(() => {
     )`);
 });
 
+// Cookies
+app.use(session({
+    secret: sessionSecret, 
+    resave: false,
+    saveUninitialized: false
+}));
+
 // Main screen / Check to see if its under maintenance
 app.use((req, res, next) => {
     // Change 'true' to 'false' when ready210
@@ -96,14 +103,6 @@ app.use((req, res, next) => {
         next(); 
     }
 });
-
-
-// Cookies
-app.use(session({
-    secret: sessionSecret, 
-    resave: false,
-    saveUninitialized: false
-}));
 
 // Needed login to go through
 function requireLogin(req, res, next) {
@@ -125,6 +124,28 @@ app.get('/', requireLogin, (req, res) => {
 // Tasks / Main menu
 app.get('/Tasks', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+// 4. API: Admin route to edit an existing task inline
+// Notice express.json() - this is required to read the JSON data sent by the fetch request
+app.post('/api/task/:id/edit', express.json(), (req, res) => {
+    const taskId = req.params.id;
+    const { adminKey, name, description, estimated_time } = req.body;
+
+    // Security Check
+    if (adminKey !== process.env.ADMIN_KEY) {
+        return res.status(403).send("Access Denied.");
+    }
+
+    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ? WHERE id = ?`;
+    db.run(sql, [name, description, estimated_time, taskId], function(err) {
+        if (err) {
+            console.error("Edit error:", err.message);
+            return res.status(500).json({ error: "Failed to update database" });
+        }
+        console.log(`[SYSTEM] Task ${taskId} updated by Admin.`);
+        res.status(200).send("Updated successfully");
+    });
 });
 
 //Registration menu
@@ -242,9 +263,10 @@ app.get('/supersecretcyber-panel/start-timer', (req, res) => {
 });
 
 app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req, res) => {
+
     // 1. Verify it's actually you
     if (req.body.adminKey !== process.env.ADMIN_KEY) {
-        return res.status(403).send("Access Denied.");
+        return res.status(403).send("SHOO SHOO HACKER!.");
     }
 
     // 2. Grab the text data from the form

@@ -258,12 +258,14 @@
         for (let i = 1; i <= count; i++) {
             const card = document.createElement('div');
             card.className = 'task-card';
+            // Inside index.html -> renderTasks()
             card.innerHTML = `
-                <img src="/task-placeholder.png" class="task-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMyMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlIHBlbmRpbmc8L3RleHQ+PC9zdmc+'">
-                <div class="task-info">
-                    <h3>Challenge ${i}</h3>
-                    <p>Decrypt the payload to retrieve the flag.</p>
-                </div>
+                <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                    <img src="${task.image_url}" class="task-image" alt="Task Image">
+                    <h2>${task.name}</h2>
+                    <p>${task.description}</p>
+                    <p style="color: white;">⏱️ Time: ${task.estimated_time}</p>
+                </a>
             `;
             tasksGrid.appendChild(card);
         }

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CTF Task</title>
+    <style>
+        :root { --bg: #1a102a; --panel: #2a1b40; --accent: #e066a3; --text: #ffb74d; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 30px; max-width: 800px; margin: 0 auto; }
+        
+        .card { background: var(--panel); border: 1px solid var(--accent); border-radius: 15px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 20px;}
+        .task-image { width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; }
+        
+        input[type="text"], textarea { width: 100%; padding: 10px; margin: 10px 0; background: #110a1c; border: 1px solid var(--accent); color: white; border-radius: 5px; font-family: inherit;}
+        button { background: var(--accent); color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        button:hover { filter: brightness(1.2); }
+        
+        .hidden { display: none; }
+        .admin-controls { background: rgba(255, 0, 0, 0.1); border: 1px dashed red; padding: 15px; border-radius: 10px; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+
+    <a href="javascript:history.back()" style="color: var(--accent); text-decoration: none;">◄ BACK TO TERMINAL</a>
+    <br><br>
+
+    <div id="adminPanel" class="admin-controls hidden">
+        <h3 style="color: red; margin-top: 0;">🔧 ADMIN EDIT MODE</h3>
+        <input type="text" id="editName" placeholder="Task Name">
+        <textarea id="editDesc" rows="5" placeholder="Task Description"></textarea>
+        <input type="text" id="editTime" placeholder="Estimated Time">
+        <button onclick="saveEdits()">💾 Save Changes to Database</button>
+        <span id="saveStatus" style="margin-left: 15px; color: #4caf50;"></span>
+    </div>
+
+    <div class="card" id="playerPanel">
+        <h1 id="taskName">Loading...</h1>
+        <p style="color: white;">⏱️ Time: <span id="taskTime">...</span></p>
+        <img id="taskImage" src="" class="task-image" alt="Task Image" style="display: none;">
+        <p id="taskDesc" style="font-size: 1.2em; line-height: 1.6; color: white;"></p>
+        
+        <hr style="border-color: var(--accent); margin: 30px 0;">
+        
+        <h3>SUBMIT FLAG</h3>
+        <input type="text" id="flagInput" placeholder="CTF{type_your_flag_here}">
+        <button onclick="submitFlag()">Submit</button>
+    </div>
+
+    <script>
+        // 1. Figure out which task we are looking at from the URL (e.g., /game/task/4)
+        const taskId = window.location.pathname.split('/').pop();
+        
+        // 2. Check if you are logged in as admin
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminKey = urlParams.get('admin');
+
+        async function loadTask() {
+            try {
+                const response = await fetch(`/api/task/${taskId}`);
+                if (!response.ok) {
+                    document.getElementById('taskName').innerText = "ERROR: Task not found.";
+                    return;
+                }
+                const task = await response.json();
+
+                // Fill in the Player View
+                document.getElementById('taskName').innerText = task.name;
+                document.getElementById('taskTime').innerText = task.estimated_time;
+                document.getElementById('taskDesc').innerText = task.description;
+                
+                if (task.image_url) {
+                    const img = document.getElementById('taskImage');
+                    img.src = task.image_url;
+                    img.style.display = 'block';
+                }
+
+                // If Admin, fill in the Edit View and unhide it!
+                if (adminKey) {
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    document.getElementById('editName').value = task.name;
+                    document.getElementById('editDesc').value = task.description;
+                    document.getElementById('editTime').value = task.estimated_time;
+                }
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // 3. Admin function to save edits
+        async function saveEdits() {
+            const updatedData = {
+                adminKey: adminKey,
+                name: document.getElementById('editName').value,
+                description: document.getElementById('editDesc').value,
+                estimated_time: document.getElementById('editTime').value
+            };
+
+            const response = await fetch(`/api/task/${taskId}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+
+            if (response.ok) {
+                document.getElementById('saveStatus').innerText = "✔ Saved! Reloading...";
+                setTimeout(() => window.location.reload(), 1000); // Refresh to show changes
+            } else {
+                document.getElementById('saveStatus').innerText = "❌ Error saving.";
+                document.getElementById('saveStatus').style.color = "red";
+            }
+        }
+
+        function submitFlag() {
+            alert("Flag checking logic coming soon!");
+        }
+
+        // Boot up the page
+        window.onload = loadTask;
+    </script>
+</body>
+</html>
