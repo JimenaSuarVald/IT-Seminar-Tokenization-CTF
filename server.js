@@ -126,6 +126,15 @@ app.get('/Tasks', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+app.get('/api/task/:id', requireLogin, (req, res) => {
+    const taskId = req.params.id;
+    db.get("SELECT * FROM tasks WHERE id = ?", [taskId], (err, row) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        if (!row) return res.status(404).json({ error: "Task not found" });
+        res.json(row);
+    });
+});
+
 // 4. API: Admin route to edit an existing task inline
 // Notice express.json() - this is required to read the JSON data sent by the fetch request
 app.post('/api/task/:id/edit', express.json(), (req, res) => {
@@ -264,8 +273,10 @@ app.get('/supersecretcyber-panel/start-timer', (req, res) => {
 
 app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req, res) => {
 
-    // 1. Verify it's actually you
-    if (req.body.adminKey !== process.env.ADMIN_KEY) {
+    const providedKey = req.body.adminKey || req.query.admin;
+
+    if (providedKey !== process.env.ADMIN_KEY) {
+        console.log(`[SECURITY] Blocked upload attempt! Key provided: ${providedKey}`);
         return res.status(403).send("SHOO SHOO HACKER!.");
     }
 
