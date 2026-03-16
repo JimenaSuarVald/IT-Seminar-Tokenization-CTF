@@ -139,21 +139,14 @@ app.get('/api/task/:id', requireLogin, (req, res) => {
 // Notice express.json() - this is required to read the JSON data sent by the fetch request
 app.post('/api/task/:id/edit', express.json(), (req, res) => {
     const taskId = req.params.id;
-    const { adminKey, name, description, estimated_time } = req.body;
+    const { adminKey, name, description, estimated_time, points, flag } = req.body;
 
-    // Security Check
-    if (adminKey !== process.env.ADMIN_KEY) {
-        return res.status(403).send("Access Denied.");
-    }
+    if (adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
 
-    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ? WHERE id = ?`;
-    db.run(sql, [name, description, estimated_time, taskId], function(err) {
-        if (err) {
-            console.error("Edit error:", err.message);
-            return res.status(500).json({ error: "Failed to update database" });
-        }
-        console.log(`[SYSTEM] Task ${taskId} updated by Admin.`);
-        res.status(200).send("Updated successfully");
+    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ?, points = ?, flag = ? WHERE id = ?`;
+    db.run(sql, [name, description, estimated_time, points, flag, taskId], function(err) {
+        if (err) return res.status(500).send(err.message);
+        res.status(200).send("Updated");
     });
 });
 

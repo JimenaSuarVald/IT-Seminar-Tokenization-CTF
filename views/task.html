@@ -24,13 +24,31 @@
     <br><br>
 
     <div id="adminPanel" class="admin-controls hidden">
-        <h3 style="color: red; margin-top: 0;">🔧 ADMIN EDIT MODE</h3>
-        <input type="text" id="editName" placeholder="Task Name">
-        <textarea id="editDesc" rows="5" placeholder="Task Description"></textarea>
-        <input type="text" id="editTime" placeholder="Estimated Time">
-        <button onclick="saveEdits()">💾 Save Changes to Database</button>
-        <span id="saveStatus" style="margin-left: 15px; color: #4caf50;"></span>
+    <h3 style="color: red; margin-top: 0;">🔧 ADMIN EDIT MODE</h3>
+    
+    <label>Task Name:</label>
+    <input type="text" id="editName">
+    
+    <label>Description:</label>
+    <textarea id="editDesc" rows="5"></textarea>
+    
+    <div style="display: flex; gap: 20px;">
+        <div style="flex: 1;">
+            <label>Estimated Time:</label>
+            <input type="text" id="editTime">
+        </div>
+        <div style="flex: 1;">
+            <label>Points Value:</label>
+            <input type="number" id="editPoints">
+        </div>
     </div>
+
+    <label style="color: #e066a3; font-weight: bold;">SECRET FLAG (The Answer):</label>
+    <input type="text" id="editFlag" style="border-color: #e066a3;" placeholder="CTF{secret_code_here}">
+
+    <button onclick="saveEdits()">💾 Save Changes & Update Flag</button>
+    <span id="saveStatus" style="margin-left: 15px; color: #4caf50;"></span>
+</div>
 
     <div class="card" id="playerPanel">
         <h1 id="taskName">Loading...</h1>
@@ -87,29 +105,99 @@
         }
 
         // 3. Admin function to save edits
-        async function saveEdits() {
-            const updatedData = {
-                adminKey: adminKey,
-                name: document.getElementById('editName').value,
-                description: document.getElementById('editDesc').value,
-                estimated_time: document.getElementById('editTime').value
-            };
+       async function loadTask() {
+    try {
+        const response = await fetch(`/api/task/${taskId}`);
+        const task = await response.json();
 
-            const response = await fetch(`/api/task/${taskId}/edit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedData)
-            });
-
-            if (response.ok) {
-                document.getElementById('saveStatus').innerText = "✔ Saved! Reloading...";
-                setTimeout(() => window.location.reload(), 1000); // Refresh to show changes
-            } else {
-                document.getElementById('saveStatus').innerText = "❌ Error saving.";
-                document.getElementById('saveStatus').style.color = "red";
-            }
+        // Fill Player View
+        document.getElementById('taskName').innerText = task.name;
+        document.getElementById('taskTime').innerText = task.estimated_time;
+        document.getElementById('taskDesc').innerText = task.description;
+        if (task.image_url) {
+            document.getElementById('taskImage').src = task.image_url;
+            document.getElementById('taskImage').style.display = 'block';
         }
 
+        // Fill Admin View
+        if (adminKey) {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('editName').value = task.name;
+            document.getElementById('editDesc').value = task.description;
+            document.getElementById('editTime').value = task.estimated_time;
+            document.getElementById('editPoints').value = task.points || 100;
+            document.getElementById('editFlag').value = task.flag || "";
+        }
+    } catch (err) { console.error(err); }
+}
+
+async function saveEdits() {
+    const updatedData = {
+        adminKey: adminKey,
+        name: document.getElementById('editName').value,
+        description: document.getElementById('editDesc').value,
+        estimated_time: document.getElementById('editTime').value,
+        points: document.getElementById('editPoints').value,
+        flag: document.getElementById('editFlag').value
+    };
+
+    const response = await fetch(`/api/task/${taskId}/edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+    });
+
+    if (response.ok) {
+        document.getElementById('saveStatus').innerText = "✔ Saved!";
+        setTimeout(() => window.location.reload(), 1000);
+    }
+}
+    try {
+        const response = await fetch(`/api/task/${taskId}`);
+        const task = await response.json();
+
+        // Fill Player View
+        document.getElementById('taskName').innerText = task.name;
+        document.getElementById('taskTime').innerText = task.estimated_time;
+        document.getElementById('taskDesc').innerText = task.description;
+        if (task.image_url) {
+            document.getElementById('taskImage').src = task.image_url;
+            document.getElementById('taskImage').style.display = 'block';
+        }
+
+        // Fill Admin View
+        if (adminKey) {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('editName').value = task.name;
+            document.getElementById('editDesc').value = task.description;
+            document.getElementById('editTime').value = task.estimated_time;
+            document.getElementById('editPoints').value = task.points || 100;
+            document.getElementById('editFlag').value = task.flag || "";
+        }
+    } catch (err) { console.error(err); }
+
+
+async function saveEdits() {
+    const updatedData = {
+        adminKey: adminKey,
+        name: document.getElementById('editName').value,
+        description: document.getElementById('editDesc').value,
+        estimated_time: document.getElementById('editTime').value,
+        points: document.getElementById('editPoints').value,
+        flag: document.getElementById('editFlag').value
+    };
+
+    const response = await fetch(`/api/task/${taskId}/edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+    });
+
+    if (response.ok) {
+        document.getElementById('saveStatus').innerText = "✔ Saved!";
+        setTimeout(() => window.location.reload(), 1000);
+    }
+}
         function submitFlag() {
             alert("Flag checking logic coming soon!");
         }
