@@ -222,27 +222,29 @@
         <main class="task-container" id="tasks-grid">
             </main>
 
-    </div>
-
-    <script>
+    </div><script>
     // --- 1. SIDEBAR ANIMATION ---
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('collapsed');
     }
 
-    // --- 2. SERVER SYNC (The "Radar") ---
+    // --- 2. SERVER SYNC ---
     let currentUnlocked = 0;
+    let allTasks = []; // We will store our database tasks here
 
     async function fetchGameState() {
         try {
-            const response = await fetch('/api/state');
-            const state = await response.json();
-
+            // Fetch the Game State (Timer + Unlock Count)
+            const stateRes = await fetch('/api/state');
+            const state = await stateRes.json();
             updateTimer(state.timeRemaining, state.isRunning);
             
-            // Only redraw the grid if the admin unlocked a new task!
+            // Only fetch tasks and redraw if something changed!
             if (state.unlockedTasks !== currentUnlocked) {
-                renderTasks(state.unlockedTasks);
+                const tasksRes = await fetch('/api/tasks');
+                allTasks = await tasksRes.json();
+                
+                renderTasks(allTasks, state.unlockedTasks);
                 currentUnlocked = state.unlockedTasks;
             }
         } catch (error) {
@@ -251,53 +253,54 @@
     }
 
     // --- 3. DYNAMIC TASK GENERATION ---
-    function renderTasks(count) {
+    function renderTasks(tasks, unlockedLimit) {
         const tasksGrid = document.getElementById('tasks-grid');
         tasksGrid.innerHTML = ''; // Clear the board
 
-        for (let i = 1; i <= count; i++) {
+        tasks.forEach((task, index) => {
+            // Determine if this task is locked based on the admin's limit
+            const isLocked = index >= unlockedLimit;
+            
             const card = document.createElement('div');
-            card.className = 'task-card';
-            // Inside index.html -> renderTasks()
+            // Apply 'locked-task' class if it's beyond the limit
+            card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
+            
             card.innerHTML = `
                 <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                     <img src="${task.image_url}" class="task-image" alt="Task Image">
-                    <h2>${task.name}</h2>
-                    <p>${task.description}</p>
-                    <p style="color: white;">⏱️ Time: ${task.estimated_time}</p>
+                    <div class="task-info">
+                        <h3>${task.name}</h3>
+                        <p>${task.description}</p>
+                        <p style="color: var(--accent); margin-top:10px;">⏱️ Est: ${task.estimated_time}</p>
+                    </div>
                 </a>
             `;
             tasksGrid.appendChild(card);
-        }
+        });
     }
 
     // --- 4. TIMER DISPLAY ---
     function updateTimer(secondsRemaining, isRunning) {
         const timerDisplay = document.getElementById('countdown-timer');
-        
         if (!isRunning) {
             timerDisplay.innerText = "WAITING FOR ADMIN...";
-            timerDisplay.style.color = "var(--text-main)";
             return;
         }
-
         if (secondsRemaining <= 0) {
             timerDisplay.innerText = "TIME UP!";
             timerDisplay.style.color = "red";
             return;
         }
-
         const hours = Math.floor(secondsRemaining / 3600);
         const minutes = Math.floor((secondsRemaining % 3600) / 60);
         const seconds = secondsRemaining % 60;
-
         timerDisplay.innerText = 
             String(hours).padStart(2, '0') + ':' + 
             String(minutes).padStart(2, '0') + ':' + 
             String(seconds).padStart(2, '0');
     }
 
-    // Ping the server every 1 second to stay perfectly synchronized
+    // Start the heartbeat
     setInterval(fetchGameState, 1000);
     fetchGameState(); 
 </script>
