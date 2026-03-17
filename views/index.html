@@ -84,11 +84,12 @@
 
         /* --- TOP NAVBAR --- */
         .topbar {
-            height: 60px;
+            position: relative; /* Required for the absolute positioning above */
+            height: 80px;       /* Made it a bit taller to fit the vertical stack */
             background-color: var(--panel-bg);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center; /* This centers the children (the icon group) */
             padding: 0 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
@@ -97,6 +98,8 @@
             display: flex;
             align-items: center;
             gap: 20px;
+            position: absolute; /* Keep the menu button on the far left */
+            left: 20px;
         }
 
         .menu-toggle {
@@ -124,9 +127,11 @@
 
         .topbar-right {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.2em;
+            flex-direction: column; /* Stack icon and name vertically */
+            align-items: center;    /* Center them horizontally */
+            justify-content: center;
+            gap: 5px;
+            flex-grow: 1;           /* Take up remaining space to help centering */
         }
 
         .user-icon {
@@ -197,7 +202,6 @@
 
     <nav class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="/Tasks">Tasks</a></li>
             <li><a href="/documentation">Documentation</a></li>
             <li><a href="/leaderboard">Leaderboards</a></li>
             <li><a href="/credits">Credits</a></li>
@@ -253,31 +257,30 @@
     }
 
     // --- 3. DYNAMIC TASK GENERATION ---
-    function renderTasks(tasks, unlockedLimit) {
-        const tasksGrid = document.getElementById('tasks-grid');
-        tasksGrid.innerHTML = ''; // Clear the board
+   function renderTasks(tasks, unlockedLimit) {
+    const tasksGrid = document.getElementById('tasks-grid');
+    if (!tasksGrid) return; 
+    tasksGrid.innerHTML = ''; 
 
-        tasks.forEach((task, index) => {
-            // Determine if this task is locked based on the admin's limit
-            const isLocked = index >= unlockedLimit;
-            
-            const card = document.createElement('div');
-            // Apply 'locked-task' class if it's beyond the limit
-            card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
-            
-            card.innerHTML = `
-                <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
-                    <img src="${task.image_url}" class="task-image" alt="Task Image">
-                    <div class="task-info">
-                        <h3>${task.name}</h3>
-                        <p>${task.description}</p>
-                        <p style="color: var(--accent); margin-top:10px;">⏱️ Est: ${task.estimated_time}</p>
-                    </div>
-                </a>
-            `;
-            tasksGrid.appendChild(card);
-        });
-    }
+    tasks.forEach((task, index) => {
+        const isLocked = index >= unlockedLimit;
+        const card = document.createElement('div');
+        card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
+        
+        // This is the part that was crashing before:
+        card.innerHTML = `
+            <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                <img src="${task.image_url}" class="task-image" alt="Task Image">
+                <div class="task-info">
+                    <h3>${task.name}</h3>
+                    <p>${task.description}</p>
+                    <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
+                </div>
+            </a>
+        `;
+        tasksGrid.appendChild(card);
+    });
+}
 
     // --- 4. TIMER DISPLAY ---
     function updateTimer(secondsRemaining, isRunning) {
