@@ -95,21 +95,22 @@
     </div>
 
 <script>
-    // 1. Define the admin variables FIRST so everything else can use them
+
     const urlParams = new URLSearchParams(window.location.search);
     const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
-
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
     // --- BRUTE FORCE TASK FETCH ---
+    // This runs exactly ONE TIME when the page loads. No complex checks.
     async function loadTasksImmediately() {
+        async function loadTasksImmediately() {
         try {
             console.log("Downloading tasks...");
-            
-            // 2. Attach the adminQuery to the API requests so the server doesn't block them
+            // ADDED adminQuery HERE
             const tasksRes = await fetch('/api/tasks' + adminQuery);
             const tasks = await tasksRes.json();
             
+            // ADDED adminQuery HERE
             const stateRes = await fetch('/api/state' + adminQuery);
             const state = await stateRes.json();
             const unlockedLimit = state.unlockedTasks || 1;
@@ -117,18 +118,17 @@
             const tasksGrid = document.getElementById('tasks-grid');
             tasksGrid.innerHTML = ''; 
 
-            // Safety check: if the server sent an error instead of an array, stop here
-            if (!Array.isArray(tasks) || tasks.length === 0) {
+            if (tasks.length === 0) {
                 tasksGrid.innerHTML = '<h2 style="grid-column: 1/-1; text-align: center; color: red;">No Tasks Found!</h2>';
                 return;
             }
 
-            // Draw the cards!
             tasks.forEach((task, index) => {
                 const isLocked = index >= unlockedLimit;
                 const card = document.createElement('div');
                 card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
                 
+                // ADDED encodeURIComponent(task.name) AND adminQuery TO THE LINK HERE
                 card.innerHTML = `
                     <a href="/game/task/${encodeURIComponent(task.name)}${adminQuery}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                         <img src="${task.image_url}" class="task-image" alt="Task Image">
@@ -147,6 +147,46 @@
             document.getElementById('loading-msg').innerText = "Failed to load database. Check Console (F12).";
         }
     }
+    }
+
+    // --- SEPARATE TIMER LOOP ---
+    // This only updates the clock. It doesn't touch the tasks anymore.
+    async function updateClockLoop() {
+        try {
+const stateRes = await fetch('/api/state' + adminQuery, { cache: 'no-store' });
+            const state = await stateRes.json();
+            const timerDisplay = document.getElementById('countdown-timer');
+            
+            if (!state.isRunning) {
+                timerDisplay.innerText = "WAITING FOR ADMIN...";
+                return;
+            }
+            if (state.timeRemaining <= 0) {
+                timerDisplay.innerText = "TIME UP!";
+                timerDisplay.style.color = "red";
+                return;
+            }
+            
+            const hours = Math.floor(state.timeRemaining / 3600);
+            const minutes = Math.floor((state.timeRemaining % 3600) / 60);
+            const seconds = state.timeRemaining % 60;
+            timerDisplay.innerText = 
+                String(hours).padStart(2, '0') + ':' + 
+                String(minutes).padStart(2, '0') + ':' + 
+                String(seconds).padStart(2, '0');
+        } catch (error) {
+            // Ignore small connection blips for the clock
+        }
+    }
+
+
+    function goToProfile() {
+        window.location.href = '/profile' + adminQuery;
+    }
+
+    // FIRE EVERYTHING ON BOOT
+    loadTasksImmediately();
+    setInterval(updateClockLoop, 1000); 
 </script>
 </body>
 </html>
