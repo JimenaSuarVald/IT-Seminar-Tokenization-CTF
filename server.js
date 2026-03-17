@@ -75,7 +75,9 @@ db.serialize(() => {
         name TEXT,
         description TEXT,
         estimated_time TEXT,
-        image_url TEXT
+        image_url TEXT,
+        points INTEGER DEFAULT 100,
+        flag TEXT
     )`);
 });
 
@@ -106,41 +108,43 @@ app.use((req, res, next) => {
 
 // Needed login to go through
 function requireLogin(req, res, next) {
-    if (req.session && req.session.userId) {
-        next(); // They are logged in, let them through
+    // Let them through if they have a session OR if they have the admin key
+    if ((req.session && req.session.userId) || req.query.admin === process.env.ADMIN_KEY) {
+        next(); 
     } else {
-        if (req.query.admin) {
-            res.redirect(`/login?admin=${req.query.admin}`);
-        } else {
-            res.redirect('/login'); 
-        }
-    }
-}
-
-// MAIN ENTRANCE
-function requireLogin(req, res, next) {
-    if (req.session && req.session.userId) {
-        next(); // They are logged in, let them through
-    } else {
-        // CRITICAL FIX: If a background API request fails, send JSON, not HTML!
         if (req.path.startsWith('/api/')) {
             return res.status(401).json({ error: "Session Expired" });
         }
-        // If it's a normal page load, redirect to login
-        if (req.query.admin) {
-            res.redirect(`/login?admin=${req.query.admin}`);
-        } else {
-            res.redirect('/login'); 
-        }
+        // Redirect to login, preserving the admin query if they mistyped it
+        const adminQuery = req.query.admin ? `?admin=${req.query.admin}` : '';
+        res.redirect('/login' + adminQuery); 
     }
 }
+
 // Tasks / Main menu
-app.get('/Tasks', (req, res) => {
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-app.get('/api/me', requireLogin, (req, res) => {
+app.get('/game/task/:id', requireLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'task.html'));
+});
+
+app.get('/profile', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'profile.html'));
+});
+
+app.get('/api/me', requireLogin, (req, res) => {
+    // If testing as admin without a real session, return dummy data
+    if (!req.session.userId) {
+        return res.json({ username: "Admin Bypass", score: 9999, found_flags: "" });
+    }
+    
+    // Otherwise, fetch the real player's data
+    db.get("SELECT username, score, found_flags FROM players WHERE id = ?", [req.session.userId], (err, row) => {
+        if (err || !row) return res.status(404).json({ error: "User not found" });
+        res.json(row);
+    });
 });
 
 // --- DASHBOARD API: GET ALL TASKS ---
@@ -318,6 +322,22 @@ app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req
         console.log(`[SYSTEM] SUCCESS! Task "${taskName}" added to Database.`);
         res.status(200).send("Task saved successfully!");
     });
+});
+
+app.get('/supersecretcyber-panel/set-tasks', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+    
+    // Grab the number from the URL and update the game state
+    const count = parseInt(req.query.count) || 1;
+    gameState.unlockedTasks = count;
+    
+    // Give the admin a confirmation screen
+    res.send(`
+        <body style="background:#1a102a; color:#e066a3; font-family:monospace; text-align:center; padding-top:50px;">
+            <h1>✔ TASKS UNLOCKED: ${count}</h1>
+            <a href="/supersecretcyber-panel?admin=${process.env.ADMIN_KEY}" style="color:#ffb74d;">Return to Mission Control</a>
+        </body>
+    `);
 });
 
 app.listen(port, () => {

@@ -115,8 +115,7 @@
 
     <script>
     // --- SILENT TASK UPLOAD ---
-    async function submitTask(event) {
-    // 1. Stop the browser from redirecting!
+async function submitTask(event) {
     event.preventDefault(); 
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -126,13 +125,7 @@
     const btn = document.getElementById('upload-btn');
     const statusText = document.getElementById('upload-status');
     
-    // 2. Package all the text and the image file together
     const formData = new FormData(form);
-
-    const response = await fetch(`/supersecretcyber-panel/upload-task?admin=${currentAdmin}`, {
-    method: 'POST',
-    body: formData
-    });
     
     // Visual feedback
     btn.innerText = "Uploading...";
@@ -140,8 +133,8 @@
     statusText.innerText = "";
 
     try {
-        // 3. Send the package to the Raspberry Pi
-        const response = await fetch('/supersecretcyber-panel/upload-task', {
+        // Send the package to the server (ONLY ONCE)
+        const response = await fetch(`/supersecretcyber-panel/upload-task?admin=${currentAdmin}`, {
             method: 'POST',
             body: formData
         });
@@ -151,9 +144,8 @@
             btn.style.backgroundColor = "#4caf50";
             btn.style.boxShadow = "0 0 15px #4caf50";
             statusText.innerText = "Task successfully added to the database!";
-            form.reset(); // Clear the inputs for the next task
+            form.reset(); 
             
-            // Reset button color after 3 seconds
             setTimeout(() => {
                 btn.innerText = "➕ Save Task to Server";
                 btn.style.backgroundColor = "var(--accent)";

@@ -64,50 +64,20 @@
     </div>
 
     <script>
-        // 1. Figure out which task we are looking at from the URL (e.g., /game/task/4)
-        const taskId = window.location.pathname.split('/').pop();
-        
-        // 2. Check if you are logged in as admin
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminKey = urlParams.get('admin');
+        // 1. Figure out which task we are looking at from the URL
+const taskId = window.location.pathname.split('/').pop();
 
-        async function loadTask() {
-            try {
-                const response = await fetch(`/api/task/${taskId}`);
-                if (!response.ok) {
-                    document.getElementById('taskName').innerText = "ERROR: Task not found.";
-                    return;
-                }
-                const task = await response.json();
+// 2. Check if you are logged in as admin
+const urlParams = new URLSearchParams(window.location.search);
+const adminKey = urlParams.get('admin');
 
-                // Fill in the Player View
-                document.getElementById('taskName').innerText = task.name;
-                document.getElementById('taskTime').innerText = task.estimated_time;
-                document.getElementById('taskDesc').innerText = task.description;
-                
-                if (task.image_url) {
-                    const img = document.getElementById('taskImage');
-                    img.src = task.image_url;
-                    img.style.display = 'block';
-                }
-
-                // If Admin, fill in the Edit View and unhide it!
-                if (adminKey) {
-                    document.getElementById('adminPanel').classList.remove('hidden');
-                    document.getElementById('editName').value = task.name;
-                    document.getElementById('editDesc').value = task.description;
-                    document.getElementById('editTime').value = task.estimated_time;
-                }
-
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        // 3. Admin function to save edits
-       async function loadTask() {
+async function loadTask() {
     try {
         const response = await fetch(`/api/task/${taskId}`);
+        if (!response.ok) {
+            document.getElementById('taskName').innerText = "ERROR: Task not found.";
+            return;
+        }
         const task = await response.json();
 
         // Fill Player View
@@ -152,58 +122,13 @@ async function saveEdits() {
         setTimeout(() => window.location.reload(), 1000);
     }
 }
-    try {
-        const response = await fetch(`/api/task/${taskId}`);
-        const task = await response.json();
 
-        // Fill Player View
-        document.getElementById('taskName').innerText = task.name;
-        document.getElementById('taskTime').innerText = task.estimated_time;
-        document.getElementById('taskDesc').innerText = task.description;
-        if (task.image_url) {
-            document.getElementById('taskImage').src = task.image_url;
-            document.getElementById('taskImage').style.display = 'block';
-        }
-
-        // Fill Admin View
-        if (adminKey) {
-            document.getElementById('adminPanel').classList.remove('hidden');
-            document.getElementById('editName').value = task.name;
-            document.getElementById('editDesc').value = task.description;
-            document.getElementById('editTime').value = task.estimated_time;
-            document.getElementById('editPoints').value = task.points || 100;
-            document.getElementById('editFlag').value = task.flag || "";
-        }
-    } catch (err) { console.error(err); }
-
-
-async function saveEdits() {
-    const updatedData = {
-        adminKey: adminKey,
-        name: document.getElementById('editName').value,
-        description: document.getElementById('editDesc').value,
-        estimated_time: document.getElementById('editTime').value,
-        points: document.getElementById('editPoints').value,
-        flag: document.getElementById('editFlag').value
-    };
-
-    const response = await fetch(`/api/task/${taskId}/edit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData)
-    });
-
-    if (response.ok) {
-        document.getElementById('saveStatus').innerText = "✔ Saved!";
-        setTimeout(() => window.location.reload(), 1000);
-    }
+function submitFlag() {
+    alert("Flag checking logic coming soon!");
 }
-        function submitFlag() {
-            alert("Flag checking logic coming soon!");
-        }
 
-        // Boot up the page
-        window.onload = loadTask;
+// Boot up the page
+window.onload = loadTask;
     </script>
 </body>
 </html>

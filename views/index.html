@@ -147,7 +147,7 @@
     // This only updates the clock. It doesn't touch the tasks anymore.
     async function updateClockLoop() {
         try {
-            const stateRes = await fetch('/api/state');
+            const stateRes = await fetch('/api/state', { cache: 'no-store' });
             const state = await stateRes.json();
             const timerDisplay = document.getElementById('countdown-timer');
             
