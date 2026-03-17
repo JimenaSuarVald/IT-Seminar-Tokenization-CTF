@@ -131,15 +131,23 @@
             align-items: center;    /* Center them horizontally */
             justify-content: center;
             gap: 5px;
-            flex-grow: 1;           /* Take up remaining space to help centering */
         }
 
-        .user-icon {
-            width: 40px;
-            height: 40px;
+        /* --- THE ICON FIX --- */
+        .icon-circle {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             border: 2px solid var(--text-main);
-            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centers the icon inside the ring */
+        }
+
+        .icon-circle img {
+            width: 30px; /* Makes the actual person icon a bit smaller than the ring */
+            height: 30px;
+            object-fit: contain;
         }
 
         /* --- TASK GRID --- */
@@ -218,7 +226,9 @@
             </div>
             
             <div class="topbar-right">
-                <img src="/usericon.png" alt="User Icon" class="user-icon" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZiNzRkIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOCIgcj0iNCIvPjxwYXRoIGQ9Ik0yMCAyMWMtMi00LTQtNi04LTZzLTYgMi04IDZWMjFoMTZ2LTF6Ii8+PC9zdmc+'">
+                <div class="icon-circle">
+                    <img src="/usericon.png" alt="User Icon" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZiNzRkIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOCIgcj0iNCIvPjxwYXRoIGQ9Ik0yMCAyMWMtMi00LTQtNi04LTZzLTYgMi04IDZWMjFoMTZ2LTF6Ii8+PC9zdmc+'">
+                </div>
                 <span>Account</span>
             </div>
         </header>
@@ -233,7 +243,7 @@
     }
 
     // --- 2. SERVER SYNC ---
-    let currentUnlocked = 0;
+    let currentUnlocked = -1; // FIXED: Set to -1 to force tasks to load immediately
     let allTasks = []; // We will store our database tasks here
 
     async function fetchGameState() {
@@ -243,8 +253,8 @@
             const state = await stateRes.json();
             updateTimer(state.timeRemaining, state.isRunning);
             
-            // Only fetch tasks and redraw if something changed!
-            if (state.unlockedTasks !== currentUnlocked) {
+            // FIXED: Added a backup check to ensure it fetches if the grid is somehow empty
+            if (state.unlockedTasks !== currentUnlocked || document.getElementById('tasks-grid').children.length === 0) {
                 const tasksRes = await fetch('/api/tasks');
                 allTasks = await tasksRes.json();
                 
@@ -267,7 +277,6 @@
         const card = document.createElement('div');
         card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
         
-        // This is the part that was crashing before:
         card.innerHTML = `
             <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                 <img src="${task.image_url}" class="task-image" alt="Task Image">
