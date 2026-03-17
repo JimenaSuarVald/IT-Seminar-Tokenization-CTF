@@ -120,22 +120,23 @@
 
             // Draw the cards!
             tasks.forEach((task, index) => {
-                const isLocked = index >= unlockedLimit;
-                const card = document.createElement('div');
-                card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
-                
-                card.innerHTML = `
-                    <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
-                        <img src="${task.image_url}" class="task-image" alt="Task Image">
-                        <div class="task-info">
-                            <h3>${task.name}</h3>
-                            <p>${task.description}</p>
-                            <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
-                        </div>
-                    </a>
-                `;
-                tasksGrid.appendChild(card);
-            });
+            const isLocked = index >= unlockedLimit;
+            const card = document.createElement('div');
+            card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
+            
+            // This line now uses encodeURIComponent(task.name) AND attaches the ${adminQuery}
+            card.innerHTML = `
+                <a href="/game/task/${encodeURIComponent(task.name)}${adminQuery}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                    <img src="${task.image_url}" class="task-image" alt="Task Image">
+                    <div class="task-info">
+                        <h3>${task.name}</h3>
+                        <p>${task.description}</p>
+                        <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
+                    </div>
+                </a>
+            `;
+            tasksGrid.appendChild(card);
+        });
             console.log("Tasks successfully drawn to screen!");
         } catch (error) {
             console.error("Critical failure loading tasks:", error);

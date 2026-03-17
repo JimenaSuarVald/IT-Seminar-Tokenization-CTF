@@ -99,7 +99,7 @@ app.use((req, res, next) => {
         accent: '#e066a3',  
     };
 
-    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/')) {
+    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/')&& !req.path.startsWith('/leaderboard') && !req.path.startsWith('/game/')) {
        res.sendFile(path.join(__dirname, 'views', 'wip.html'));
     } else  {
         next(); 
@@ -126,7 +126,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-app.get('/game/task/:id', requireLogin, (req, res) => {
+app.get('/game/task/:name', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'task.html'));
 });
 
@@ -159,9 +159,9 @@ app.get('/api/tasks', requireLogin, (req, res) => {
     });
 });
 
-app.get('/api/task/:id', requireLogin, (req, res) => {
-    const taskId = req.params.id;
-    db.get("SELECT * FROM tasks WHERE id = ?", [taskId], (err, row) => {
+app.get('/api/task/:name', requireLogin, (req, res) => {
+    const taskName = req.params.name;
+    db.get("SELECT * FROM tasks WHERE name = ?", [taskName], (err, row) => {
         if (err) return res.status(500).json({ error: "Database error" });
         if (!row) return res.status(404).json({ error: "Task not found" });
         res.json(row);
@@ -170,16 +170,19 @@ app.get('/api/task/:id', requireLogin, (req, res) => {
 
 // 4. API: Admin route to edit an existing task inline
 // Notice express.json() - this is required to read the JSON data sent by the fetch request
-app.post('/api/task/:id/edit', express.json(), (req, res) => {
-    const taskId = req.params.id;
+app.post('/api/task/:name/edit', express.json(), (req, res) => {
+    const oldTaskName = req.params.name;
     const { adminKey, name, description, estimated_time, points, flag } = req.body;
 
     if (adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
 
-    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ?, points = ?, flag = ? WHERE id = ?`;
-    db.run(sql, [name, description, estimated_time, points, flag, taskId], function(err) {
+    // Notice it updates WHERE name = oldTaskName
+    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ?, points = ?, flag = ? WHERE name = ?`;
+    db.run(sql, [name, description, estimated_time, points, flag, oldTaskName], function(err) {
         if (err) return res.status(500).send(err.message);
-        res.status(200).send("Updated");
+        
+        // We send back the new name so the frontend knows where to redirect
+        res.status(200).json({ newName: name });
     });
 });
 
@@ -338,6 +341,64 @@ app.get('/supersecretcyber-panel/set-tasks', (req, res) => {
             <a href="/supersecretcyber-panel?admin=${process.env.ADMIN_KEY}" style="color:#ffb74d;">Return to Mission Control</a>
         </body>
     `);
+});
+
+// --- TASK MANAGER (Admin Menu View) ---
+app.get('/supersecretcyber-panel/manage-tasks', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+
+    db.all("SELECT id, name, points, flag FROM tasks", [], (err, rows) => {
+        if (err) return res.status(500).send("Database error.");
+
+        let html = `
+        <body style="background:#1a102a; color:#ffb74d; font-family:monospace; padding: 40px; text-align: center;">
+            <h1 style="color: #e066a3; text-shadow: 0 0 10px #e066a3;">🗑️ TASK MANAGER</h1>
+            <a href="/supersecretcyber-panel?admin=${process.env.ADMIN_KEY}" style="color: #ffb74d; text-decoration: none; border: 1px solid #ffb74d; padding: 10px; border-radius: 5px; transition: 0.2s;">◄ Back to Mission Control</a>
+            
+            <table style="margin: 40px auto; border-collapse: collapse; width: 80%; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px #e066a3;">
+                <tr style="background: #e066a3; color: white;">
+                    <th style="padding: 15px; border: 1px solid #444;">ID</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Task Name</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Points</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Flag</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Actions</th>
+                </tr>
+        `;
+
+        rows.forEach(task => {
+            html += `
+                <tr>
+                    <td style="padding: 15px; border: 1px solid #444;">${task.id}</td>
+                    <td style="padding: 15px; border: 1px solid #444;">
+                        <a href="/game/task/${encodeURIComponent(task.name)}?admin=${process.env.ADMIN_KEY}" style="color:#ffb74d; font-weight:bold; text-decoration:none;">${task.name} 📝</a>
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #444;">${task.points}</td>
+                    <td style="padding: 15px; border: 1px solid #444; color: #4caf50;">${task.flag || "<em>Not set</em>"}</td>
+                    <td style="padding: 15px; border: 1px solid #444;">
+                        <form action="/api/task/delete" method="POST" style="margin:0;">
+                            <input type="hidden" name="adminKey" value="${process.env.ADMIN_KEY}">
+                            <input type="hidden" name="taskId" value="${task.id}">
+                            <button type="submit" style="background:#d32f2f; color:white; border:none; padding:8px 15px; cursor:pointer; border-radius:5px; font-weight:bold; font-family:monospace;">DELETE</button>
+                        </form>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</table></body>';
+        res.send(html);
+    });
+});
+
+// --- DELETE TASK LOGIC ---
+app.post('/api/task/delete', express.urlencoded({ extended: true }), (req, res) => {
+    if (req.body.adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
+    
+    db.run("DELETE FROM tasks WHERE id = ?", [req.body.taskId], (err) => {
+        if (err) return res.status(500).send("Error deleting task.");
+        // Reload the task manager page after deletion
+        res.redirect(`/supersecretcyber-panel/manage-tasks?admin=${process.env.ADMIN_KEY}`);
+    });
 });
 
 app.listen(port, () => {

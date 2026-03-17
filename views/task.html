@@ -63,17 +63,19 @@
         <button onclick="submitFlag()">Submit</button>
     </div>
 
-    <script>
-        // 1. Figure out which task we are looking at from the URL
-const taskId = window.location.pathname.split('/').pop();
+    <script>// 1. Grab the name from the URL and decode any spaces (%20)
+const taskIdentifier = decodeURIComponent(window.location.pathname.split('/').pop());
 
-// 2. Check if you are logged in as admin
 const urlParams = new URLSearchParams(window.location.search);
 const adminKey = urlParams.get('admin');
 
 async function loadTask() {
     try {
-        const response = await fetch(`/api/task/${taskId}`);
+        const adminQuery = adminKey ? `?admin=${adminKey}` : '';
+        
+        // Use the encoded name for the API call
+        const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}${adminQuery}`);
+        
         if (!response.ok) {
             document.getElementById('taskName').innerText = "ERROR: Task not found.";
             return;
@@ -111,15 +113,20 @@ async function saveEdits() {
         flag: document.getElementById('editFlag').value
     };
 
-    const response = await fetch(`/api/task/${taskId}/edit`, {
+    const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}/edit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
     });
 
     if (response.ok) {
+        const data = await response.json();
         document.getElementById('saveStatus').innerText = "✔ Saved!";
-        setTimeout(() => window.location.reload(), 1000);
+        
+        // Redirect to the new URL just in case the admin changed the task name!
+        setTimeout(() => {
+            window.location.href = `/game/task/${encodeURIComponent(data.newName)}?admin=${adminKey}`;
+        }, 1000);
     }
 }
 
@@ -127,8 +134,7 @@ function submitFlag() {
     alert("Flag checking logic coming soon!");
 }
 
-// Boot up the page
 window.onload = loadTask;
-    </script>
+</script>
 </body>
 </html>
