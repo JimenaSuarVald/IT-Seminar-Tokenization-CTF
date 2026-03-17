@@ -7,203 +7,58 @@
     <style>
         /* --- CORE PALETTE & TYPOGRAPHY --- */
         :root {
-            --bg-dark: #1a102a;
-            --text-main: #ffb74d;
-            --accent: #e066a3;
-            --panel-bg: #2a1b40;
-            --sidebar-width: 250px;
+            --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; --sidebar-width: 250px;
         }
 
         body {
-            margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; font-family: 'Courier New', Courier, monospace; background-color: var(--bg-dark);
+            color: var(--text-main); display: flex; height: 100vh; overflow: hidden;
         }
 
         /* --- SIDEBAR --- */
         .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--panel-bg);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-            z-index: 100;
+            width: var(--sidebar-width); background-color: var(--panel-bg); display: flex; flex-direction: column;
+            transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 100;
         }
+        .sidebar.collapsed { transform: translateX(-100%); position: absolute; height: 100%; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; display: flex; flex-direction: column; }
+        .sidebar-menu li a { display: block; padding: 20px; color: var(--text-main); text-decoration: none; font-size: 1.2em; transition: 0.2s; }
+        .sidebar-menu li a:hover { background-color: rgba(224, 102, 163, 0.2); padding-left: 25px; border-left: 4px solid var(--accent); }
+        .sign-out { margin-top: auto; background-color: rgba(224, 102, 163, 0.1); width: 100%; }
 
-        .sidebar.collapsed {
-            transform: translateX(-100%);
-            position: absolute;
-            height: 100%;
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            flex-grow: 1;
-            display: flex;       
-            flex-direction: column; 
-            height: 100%;         
-        }
-
-        .sidebar-menu li a {
-            display: block;
-            padding: 20px;
-            color: var(--text-main);
-            text-decoration: none;
-            font-size: 1.2em;
-            transition: background-color 0.2s, padding-left 0.2s;
-        }
-
-        .sidebar-menu li a:hover {
-            background-color: rgba(224, 102, 163, 0.2);
-            padding-left: 25px;
-            border-left: 4px solid var(--accent);
-        }
-
-        /* Forces the sign-out button to the very bottom */
-        .sign-out {
-            margin-top: auto;
-            background-color: rgba(224, 102, 163, 0.1);
-            width: 100%;
-        }
-
-        /* --- MAIN CONTENT AREA --- */
-        .main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            transition: margin-left 0.3s ease;
-            width: 100%;
-        }
-
-        /* --- TOP NAVBAR --- */
+        /* --- MAIN CONTENT & TOPBAR --- */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; width: 100%; }
         .topbar {
-            position: relative; /* Required for the absolute positioning above */
-            height: 80px;       /* Made it a bit taller to fit the vertical stack */
-            background-color: var(--panel-bg);
-            display: flex;
-            align-items: center;
-            justify-content: center; /* This centers the children (the icon group) */
-            padding: 0 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            position: relative; height: 100px; background-color: var(--panel-bg); display: flex;
+            align-items: center; justify-content: center; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
+        .topbar-left { display: flex; align-items: center; gap: 20px; position: absolute; left: 20px; }
+        .menu-toggle { background: none; border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; padding: 5px 10px; transition: 0.2s; }
+        .menu-toggle:hover { background-color: var(--accent); color: var(--bg-dark); }
+        .timer { font-size: 1.5em; font-weight: bold; color: #fff; text-shadow: 0 0 8px var(--accent); }
 
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            position: absolute; /* Keep the menu button on the far left */
-            left: 20px;
-        }
-
-        .menu-toggle {
-            background: none;
-            border: 2px solid var(--accent);
-            color: var(--accent);
-            font-size: 1.5em;
-            cursor: pointer;
-            border-radius: 5px;
-            padding: 5px 10px;
-            transition: all 0.2s;
-        }
-
-        .menu-toggle:hover {
-            background-color: var(--accent);
-            color: var(--bg-dark);
-        }
-
-        .timer {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 0 0 8px var(--accent);
-        }
-
+        /* --- THE CENTERING FIX FOR ICON --- */
         .topbar-right {
-            display: flex;
-            flex-direction: column; /* Stack icon and name vertically */
-            align-items: center;    /* Center them horizontally */
-            justify-content: center;
-            gap: 5px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
         }
-
-        /* --- THE ICON FIX --- */
         .icon-circle {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: center; /* Centers the icon inside the ring */
+            width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main);
+            display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark);
         }
-
         .icon-circle img {
-            width: 30px; /* Makes the actual person icon a bit smaller than the ring */
-            height: 30px;
-            object-fit: contain;
+            width: 24px; height: 24px; /* Strictly sized to prevent stretching */
+            display: block; margin: 0 auto; /* Forces absolute center */
         }
 
         /* --- TASK GRID --- */
-        .task-container {
-            padding: 30px;
-            overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-        }
-
-        .task-card {
-            background-color: var(--panel-bg);
-            border-radius: 15px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 183, 77, 0.2);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .task-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(224, 102, 163, 0.4);
-            border-color: var(--accent);
-        }
-
-        .task-image {
-            width: 100%;
-            height: 150px;
-            background-color: #000;
-            object-fit: cover;
-            border-bottom: 2px solid var(--accent);
-        }
-
-        .task-info {
-            padding: 15px;
-            text-align: center;
-        }
-
-        .task-info h3 {
-            margin: 0 0 10px 0;
-            color: #fff;
-        }
-
-        .task-info p {
-            margin: 0;
-            font-size: 0.9em;
-            color: #ccc;
-        }
-
-        .locked-task {
-            filter: grayscale(100%) brightness(50%);
-            pointer-events: none; /* Physically prevents clicking */
-            opacity: 0.6;
-        }
-        
+        .task-container { padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .task-card { background-color: var(--panel-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 183, 77, 0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; }
+        .task-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(224, 102, 163, 0.4); border-color: var(--accent); }
+        .task-image { width: 100%; height: 150px; background-color: #000; object-fit: cover; border-bottom: 2px solid var(--accent); }
+        .task-info { padding: 15px; text-align: center; }
+        .task-info h3 { margin: 0 0 10px 0; color: #fff; }
+        .task-info p { margin: 0; font-size: 0.9em; color: #ccc; }
+        .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -218,7 +73,6 @@
     </nav>
 
     <div class="main-content">
-        
         <header class="topbar">
             <div class="topbar-left">
                 <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
@@ -227,94 +81,99 @@
             
             <div class="topbar-right">
                 <div class="icon-circle">
-                    <img src="/usericon.png" alt="User Icon" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZiNzRkIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOCIgcj0iNCIvPjxwYXRoIGQ9Ik0yMCAyMWMtMi00LTQtNi04LTZzLTYgMi04IDZWMjFoMTZ2LTF6Ii8+PC9zdmc+'">
+                    <img src="/usericon.png" alt="User" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZiNzRkIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOCIgcj0iNCIvPjxwYXRoIGQ9Ik0yMCAyMWMtMi00LTQtNi04LTZzLTYgMi04IDZWMjFoMTZ2LTF6Ii8+PC9zdmc+'">
                 </div>
                 <span>Account</span>
             </div>
         </header>
 
         <main class="task-container" id="tasks-grid">
-            </main>
+            <h2 id="loading-msg" style="grid-column: 1/-1; text-align: center;">Fetching Database...</h2>
+        </main>
+    </div>
 
-    </div><script>
-    // --- 1. SIDEBAR ANIMATION ---
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-    }
+<script>
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
-    // --- 2. SERVER SYNC ---
-    let currentUnlocked = -1; // FIXED: Set to -1 to force tasks to load immediately
-    let allTasks = []; // We will store our database tasks here
-
-    async function fetchGameState() {
+    // --- BRUTE FORCE TASK FETCH ---
+    // This runs exactly ONE TIME when the page loads. No complex checks.
+    async function loadTasksImmediately() {
         try {
-            // Fetch the Game State (Timer + Unlock Count)
+            console.log("Downloading tasks...");
+            const tasksRes = await fetch('/api/tasks');
+            const tasks = await tasksRes.json();
+            
+            // Get the current unlock limit from state
             const stateRes = await fetch('/api/state');
             const state = await stateRes.json();
-            updateTimer(state.timeRemaining, state.isRunning);
-            
-            // FIXED: Added a backup check to ensure it fetches if the grid is somehow empty
-            if (state.unlockedTasks !== currentUnlocked || document.getElementById('tasks-grid').children.length === 0) {
-                const tasksRes = await fetch('/api/tasks');
-                allTasks = await tasksRes.json();
-                
-                renderTasks(allTasks, state.unlockedTasks);
-                currentUnlocked = state.unlockedTasks;
+            const unlockedLimit = state.unlockedTasks || 1;
+
+            const tasksGrid = document.getElementById('tasks-grid');
+            tasksGrid.innerHTML = ''; // Clear "Fetching Database..." message
+
+            if (tasks.length === 0) {
+                tasksGrid.innerHTML = '<h2 style="grid-column: 1/-1; text-align: center; color: red;">No Tasks Found!</h2>';
+                return;
             }
+
+            // Draw the cards!
+            tasks.forEach((task, index) => {
+                const isLocked = index >= unlockedLimit;
+                const card = document.createElement('div');
+                card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
+                
+                card.innerHTML = `
+                    <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                        <img src="${task.image_url}" class="task-image" alt="Task Image">
+                        <div class="task-info">
+                            <h3>${task.name}</h3>
+                            <p>${task.description}</p>
+                            <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
+                        </div>
+                    </a>
+                `;
+                tasksGrid.appendChild(card);
+            });
+            console.log("Tasks successfully drawn to screen!");
         } catch (error) {
-            console.error("Lost connection to Raspberry Pi...");
+            console.error("Critical failure loading tasks:", error);
+            document.getElementById('loading-msg').innerText = "Failed to load database. Check Console (F12).";
         }
     }
 
-    // --- 3. DYNAMIC TASK GENERATION ---
-   function renderTasks(tasks, unlockedLimit) {
-    const tasksGrid = document.getElementById('tasks-grid');
-    if (!tasksGrid) return; 
-    tasksGrid.innerHTML = ''; 
-
-    tasks.forEach((task, index) => {
-        const isLocked = index >= unlockedLimit;
-        const card = document.createElement('div');
-        card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
-        
-        card.innerHTML = `
-            <a href="/game/task/${task.id}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
-                <img src="${task.image_url}" class="task-image" alt="Task Image">
-                <div class="task-info">
-                    <h3>${task.name}</h3>
-                    <p>${task.description}</p>
-                    <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
-                </div>
-            </a>
-        `;
-        tasksGrid.appendChild(card);
-    });
-}
-
-    // --- 4. TIMER DISPLAY ---
-    function updateTimer(secondsRemaining, isRunning) {
-        const timerDisplay = document.getElementById('countdown-timer');
-        if (!isRunning) {
-            timerDisplay.innerText = "WAITING FOR ADMIN...";
-            return;
+    // --- SEPARATE TIMER LOOP ---
+    // This only updates the clock. It doesn't touch the tasks anymore.
+    async function updateClockLoop() {
+        try {
+            const stateRes = await fetch('/api/state');
+            const state = await stateRes.json();
+            const timerDisplay = document.getElementById('countdown-timer');
+            
+            if (!state.isRunning) {
+                timerDisplay.innerText = "WAITING FOR ADMIN...";
+                return;
+            }
+            if (state.timeRemaining <= 0) {
+                timerDisplay.innerText = "TIME UP!";
+                timerDisplay.style.color = "red";
+                return;
+            }
+            
+            const hours = Math.floor(state.timeRemaining / 3600);
+            const minutes = Math.floor((state.timeRemaining % 3600) / 60);
+            const seconds = state.timeRemaining % 60;
+            timerDisplay.innerText = 
+                String(hours).padStart(2, '0') + ':' + 
+                String(minutes).padStart(2, '0') + ':' + 
+                String(seconds).padStart(2, '0');
+        } catch (error) {
+            // Ignore small connection blips for the clock
         }
-        if (secondsRemaining <= 0) {
-            timerDisplay.innerText = "TIME UP!";
-            timerDisplay.style.color = "red";
-            return;
-        }
-        const hours = Math.floor(secondsRemaining / 3600);
-        const minutes = Math.floor((secondsRemaining % 3600) / 60);
-        const seconds = secondsRemaining % 60;
-        timerDisplay.innerText = 
-            String(hours).padStart(2, '0') + ':' + 
-            String(minutes).padStart(2, '0') + ':' + 
-            String(seconds).padStart(2, '0');
     }
 
-    // Start the heartbeat
-    setInterval(fetchGameState, 1000);
-    fetchGameState(); 
+    // FIRE EVERYTHING ON BOOT
+    loadTasksImmediately();
+    setInterval(updateClockLoop, 1000); 
 </script>
 </body>
 </html>

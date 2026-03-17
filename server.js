@@ -97,7 +97,7 @@ app.use((req, res, next) => {
         accent: '#e066a3',  
     };
 
-    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/scores')) {
+    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/')) {
        res.sendFile(path.join(__dirname, 'views', 'wip.html'));
     } else  {
         next(); 
