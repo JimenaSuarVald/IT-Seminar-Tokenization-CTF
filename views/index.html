@@ -39,7 +39,12 @@
 
         /* --- THE CENTERING FIX FOR ICON --- */
         .topbar-right {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+            position: absolute; 
+            right: 20px;        
+            display: flex; 
+            flex-direction: row; /* Places text next to the icon instead of below it */
+            align-items: center; 
+            gap: 12px; /* Adds a nice gap between the icon and the text */
         }
         .icon-circle {
             width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main);
