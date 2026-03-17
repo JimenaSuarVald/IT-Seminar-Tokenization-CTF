@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Edit Task | Admin</title>
     <style>
@@ -39,6 +40,9 @@
             </div>
         </div>
 
+        <label>Full Formatted Content (Instructions, Links, Images):</label>
+        <div id="editor-container" style="height: 350px; background: white; color: black; margin-bottom: 20px; border-radius: 0 0 5px 5px;"></div>
+
         <label style="color: #e066a3; font-weight: bold; margin-top: 10px; display: block;">SECRET FLAG (The Answer):</label>
         <input type="text" id="editFlag" style="border-color: #e066a3;" placeholder="CTF{secret_code_here}">
 
@@ -47,24 +51,47 @@
     </div>
 
     <script>
-        // Extract the task name from the URL: /game/task/TaskName/edit
+        document.write('<script src="https://cdn.quilljs.com/1.3.6/quill.js"><\/script>');
+        
         const pathParts = window.location.pathname.split('/');
         const taskIdentifier = decodeURIComponent(pathParts[pathParts.length - 2]); 
         
         const urlParams = new URLSearchParams(window.location.search);
         const adminKey = urlParams.get('admin');
 
+        window.addEventListener('DOMContentLoaded', () => {
+            window.quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link', 'image', 'code-block'],
+                        ['clean']
+                    ]
+                }
+            });
+        });
+
         async function loadTaskData() {
             try {
                 const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}?admin=${adminKey}`);
                 if (!response.ok) return alert("Failed to load task data.");
                 
+                // Fetch the data FIRST
                 const task = await response.json();
+                
                 document.getElementById('editName').value = task.name;
                 document.getElementById('editDesc').value = task.description;
                 document.getElementById('editTime').value = task.estimated_time;
                 document.getElementById('editPoints').value = task.points || 100;
                 document.getElementById('editFlag').value = task.flag || "";
+
+                // THEN populate the rich text editor
+                if (task.content) {
+                    window.quill.root.innerHTML = task.content;
+                }
             } catch (err) { console.error(err); }
         }
 
@@ -73,6 +100,7 @@
                 adminKey: adminKey,
                 name: document.getElementById('editName').value,
                 description: document.getElementById('editDesc').value,
+                content: window.quill.root.innerHTML, // <-- Moved this inside the object!
                 estimated_time: document.getElementById('editTime').value,
                 points: document.getElementById('editPoints').value,
                 flag: document.getElementById('editFlag').value
@@ -88,7 +116,6 @@
                 const data = await response.json();
                 document.getElementById('saveStatus').innerText = "✔ Saved! Redirecting...";
                 setTimeout(() => {
-                    // Send them back to the player view to see the changes
                     window.location.href = `/game/task/${encodeURIComponent(data.newName)}?admin=${adminKey}`;
                 }, 1000);
             } else {

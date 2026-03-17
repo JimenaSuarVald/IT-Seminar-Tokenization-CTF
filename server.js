@@ -78,14 +78,12 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         description TEXT,
+        content TEXT,
         estimated_time TEXT,
         image_url TEXT,
         points INTEGER DEFAULT 100,
-        flag TEXT,
-        detailed_instructions TEXT DEFAULT '',
-        detailed_image_url TEXT DEFAULT ''
+        flag TEXT
     )`);
-
 });
 
 // Cookies
@@ -207,17 +205,57 @@ app.get('/api/task/:name', requireLogin, (req, res) => {
 // 4. API: Admin route to edit an existing task inline
 app.post('/api/task/:name/edit', express.json(), (req, res) => {
     const oldTaskName = req.params.name;
-    const { adminKey, name, description, estimated_time, points, flag, detailed_instructions, detailed_image_url } = req.body;
+    // Add 'content' to the destructured body
+    const { adminKey, name, description, content, estimated_time, points, flag } = req.body;
 
     if (adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
 
-    // Update the SQL to include the new detailed columns
-    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ?, points = ?, flag = ?, detailed_instructions = ?, detailed_image_url = ? WHERE name = ?`;
-    
-    db.run(sql, [name, description, estimated_time, points, flag, detailed_instructions, detailed_image_url, oldTaskName], function(err) {
+    // Add 'content = ?' to the SQL string and the array
+    const sql = `UPDATE tasks SET name = ?, description = ?, content = ?, estimated_time = ?, points = ?, flag = ? WHERE name = ?`;
+    db.run(sql, [name, description, content, estimated_time, points, flag, oldTaskName], function(err) {
         if (err) return res.status(500).send(err.message);
         
         res.status(200).json({ newName: name });
+    });
+});
+
+// --- NEW: Flag Submission Logic ---
+app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
+    const taskName = req.params.name;
+    const submittedFlag = req.body.flag;
+    const userId = req.session.userId;
+
+    // 1. Look up the correct flag and points for this task
+    db.get("SELECT id, flag, points FROM tasks WHERE name = ?", [taskName], (err, task) => {
+        if (err || !task) return res.status(404).json({ error: "Task not found." });
+
+        // 2. Check if the submitted flag is wrong
+        if (task.flag !== submittedFlag) {
+            return res.json({ success: false, message: "❌ Incorrect flag. Try again!" });
+        }
+
+        // 3. If correct, check the player's history
+        db.get("SELECT score, found_flags FROM players WHERE id = ?", [userId], (err, player) => {
+            if (err || !player) return res.status(500).json({ error: "Player data error." });
+
+            // found_flags is stored as a comma-separated list of Task IDs (e.g., "1,4,5")
+            const solvedTasks = player.found_flags ? player.found_flags.split(',') : [];
+            
+            // 4. Prevent double-scoring
+            if (solvedTasks.includes(task.id.toString())) {
+                return res.json({ success: true, message: "⚠️ Flag correct, but you already claimed these points!" });
+            }
+
+            // 5. Update their record with new points and the new task ID
+            solvedTasks.push(task.id);
+            const newFlags = solvedTasks.join(',');
+            const newScore = player.score + task.points;
+
+            db.run("UPDATE players SET score = ?, found_flags = ? WHERE id = ?", [newScore, newFlags, userId], (err) => {
+                if (err) return res.status(500).json({ error: "Failed to update score." });
+                res.json({ success: true, message: `🎉 Access Granted! ${task.points} points awarded.` });
+            });
+        });
     });
 });
 

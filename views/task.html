@@ -34,10 +34,15 @@
         <div id="taskDesc" style="font-size: 1.2em; line-height: 1.6; color: white;"></div>
         
         <hr style="border-color: var(--accent); margin: 30px 0;">
+
+        <div id="taskContent" style="background: rgba(0,0,0,0.2); padding: 25px; border-radius: 10px; margin: 30px 0;">
+            <em>Task details will load here...</em>
+        </div>
         
         <h3>SUBMIT FLAG</h3>
         <input type="text" id="flagInput" placeholder="CTF{type_your_flag_here}">
         <button onclick="submitFlag()">Submit</button>
+
     </div>
 
     <script>
@@ -54,16 +59,26 @@
                     document.getElementById('taskName').innerText = "ERROR: Task not found.";
                     return;
                 }
+                
+                // Fetch the data FIRST
                 const task = await response.json();
 
                 // Fill Player View
                 document.getElementById('taskName').innerText = task.name;
                 document.getElementById('taskTime').innerText = task.estimated_time;
-                document.getElementById('taskDesc').innerHTML = task.description; // HTML enabled
+                document.getElementById('taskDesc').innerHTML = task.description; 
                 
                 if (task.image_url) {
                     document.getElementById('taskImage').src = task.image_url;
                     document.getElementById('taskImage').style.display = 'block';
+                }
+
+                // THEN inject the rich text content into the div
+                const contentDiv = document.getElementById('taskContent');
+                if (task.content && task.content.trim() !== "<p><br></p>") {
+                    contentDiv.innerHTML = task.content;
+                } else {
+                    contentDiv.innerHTML = `<p>${task.description || "No detailed instructions provided."}</p>`;
                 }
 
                 // Show Edit Button if Admin
@@ -77,9 +92,32 @@
             } catch (err) { console.error(err); }
         }
 
-        function submitFlag() {
-            alert("Flag checking logic coming soon!");
+        // --- NEW: Frontend Submission Logic ---
+    async function submitFlag() {
+    const flagValue = document.getElementById('flagInput').value.trim();
+    if (!flagValue) return alert("Please enter a flag first!");
+
+    try {
+        const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ flag: flagValue })
+        });
+
+        const data = await response.json();
+        
+        // Show the result to the player
+        alert(data.message);
+        
+        // Clear the box if they got it right
+        if (data.success) {
+            document.getElementById('flagInput').value = "";
         }
+    } catch (err) {
+        console.error(err);
+        alert("Critical Error: Could not connect to the grading server.");
+    }
+}
 
         window.onload = loadTask;
     </script>
