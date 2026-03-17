@@ -118,12 +118,29 @@ function requireLogin(req, res, next) {
 }
 
 // MAIN ENTRANCE
-app.get('/', requireLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
-});
+function requireLogin(req, res, next) {
+    if (req.session && req.session.userId) {
+        next(); // They are logged in, let them through
+    } else {
+        // CRITICAL FIX: If a background API request fails, send JSON, not HTML!
+        if (req.path.startsWith('/api/')) {
+            return res.status(401).json({ error: "Session Expired" });
+        }
+        // If it's a normal page load, redirect to login
+        if (req.query.admin) {
+            res.redirect(`/login?admin=${req.query.admin}`);
+        } else {
+            res.redirect('/login'); 
+        }
+    }
+}
 // Tasks / Main menu
 app.get('/Tasks', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+app.get('/api/me', requireLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'profile.html'));
 });
 
 // --- DASHBOARD API: GET ALL TASKS ---

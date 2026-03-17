@@ -79,11 +79,13 @@
                 <div class="timer" id="countdown-timer">00:00:00</div>
             </div>
             
-            <div class="topbar-right">
+            <div class="topbar-right" onclick="goToProfile()" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="icon-circle">
-                    <img src="/usericon.png" alt="User" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdib3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZiNzRkIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iOCIgcj0iNCIvPjxwYXRoIGQ9Ik0yMCAyMWMtMi00LTQtNi04LTZzLTYgMi04IDZWMjFoMTZ2LTF6Ii8+PC9zdmc+'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" style="width: 26px; height: 26px;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+                    </svg>
                 </div>
-                <span>Account</span>
+                <span style="font-weight: bold; letter-spacing: 1px;">Account</span>
             </div>
         </header>
 
@@ -169,6 +171,14 @@
         } catch (error) {
             // Ignore small connection blips for the clock
         }
+    }
+
+    // --- PROFILE REDIRECT ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+
+    function goToProfile() {
+        window.location.href = '/profile' + adminQuery;
     }
 
     // FIRE EVERYTHING ON BOOT

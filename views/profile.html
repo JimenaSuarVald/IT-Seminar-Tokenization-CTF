@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Profile</title>
+    <style>
+        :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; }
+        body { margin: 0; font-family: 'Courier New', Courier, monospace; background-color: var(--bg-dark); color: var(--text-main); display: flex; align-items: center; justify-content: center; height: 100vh; }
+        
+        .profile-card { background: var(--panel-bg); padding: 50px; border-radius: 20px; border: 1px solid var(--accent); box-shadow: 0 0 30px rgba(224, 102, 163, 0.3); width: 400px; text-align: center; color: white; }
+        
+        .icon-circle { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--text-main); display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark); margin: 0 auto 20px auto; }
+        .icon-circle svg { width: 50px; height: 50px; stroke: var(--text-main); }
+        
+        .stat-box { background: var(--bg-dark); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 183, 77, 0.3); margin-top: 20px; }
+        
+        .back-btn { display: inline-block; margin-top: 30px; padding: 10px 20px; background: none; border: 2px solid var(--accent); color: var(--accent); text-decoration: none; border-radius: 5px; font-weight: bold; transition: 0.2s; cursor: pointer; }
+        .back-btn:hover { background: var(--accent); color: var(--bg-dark); }
+    </style>
+</head>
+<body>
+
+    <div class="profile-card">
+        <div class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+            </svg>
+        </div>
+        <h1 id="prof-username" style="margin-top: 0; color: var(--text-main); letter-spacing: 2px;">LOADING...</h1>
+        
+        <div class="stat-box">
+            <h1 id="prof-score" style="margin: 0; color: var(--accent); font-size: 3.5em;">0</h1>
+            <p style="margin: 0; color: #ccc; font-weight: bold; letter-spacing: 1px;">TOTAL SCORE</p>
+        </div>
+        
+        <div class="stat-box">
+            <h2 id="prof-completed" style="margin: 0; font-size: 2.5em;">0</h2>
+            <p style="margin: 0; color: #ccc;">TASKS COMPLETED</p>
+        </div>
+
+        <button class="back-btn" onclick="goBack()">Return to Mission Control</button>
+    </div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+
+    function goBack() {
+        window.location.href = '/' + adminQuery;
+    }
+
+    async function loadProfile() {
+        try {
+            const res = await fetch('/api/me' + adminQuery);
+            if(res.ok) {
+                const user = await res.json();
+                document.getElementById('prof-username').innerText = user.username.toUpperCase();
+                document.getElementById('prof-score').innerText = user.score;
+                
+                const completedCount = user.found_flags ? user.found_flags.split(',').filter(x => x).length : 0;
+                document.getElementById('prof-completed').innerText = completedCount;
+            } else {
+                document.getElementById('prof-username').innerText = "SESSION ERROR";
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    loadProfile();
+</script>
+</body>
+</html>
