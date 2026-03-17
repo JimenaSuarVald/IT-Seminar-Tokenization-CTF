@@ -113,6 +113,30 @@ app.use((req, res, next) => {
     }
 });
 
+app.get('/login', (req, res) => {
+    // CRITICAL FIX: Repaired broken comma syntax
+    res.sendFile(path.join(__dirname, 'views', 'login.html')); 
+});
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    const sql = `SELECT * FROM players WHERE username = ? AND password = ?`;
+    db.get(sql, [username, password], (err, user) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Server error");
+        }
+        if (user) {
+            req.session.userId = user.id;
+            req.session.username = user.username;
+            res.redirect(`/`); 
+        } else {
+            res.send(`<h1 style="color:red; text-align:center;">Invalid username or password!</h1>`);
+        }
+    });
+});
+
 // Needed login to go through
 function requireLogin(req, res, next) {
     // Let them through if they have a session OR if they have the admin key
@@ -123,8 +147,7 @@ function requireLogin(req, res, next) {
             return res.status(401).json({ error: "Session Expired" });
         }
         // Redirect to login, preserving the admin query if they mistyped it
-        const adminQuery = req.query.admin ? `?admin=${req.query.admin}` : '';
-        res.redirect('/login' + adminQuery); 
+        res.redirect('/login'); 
     }
 }
 
@@ -137,8 +160,12 @@ app.get('/game/task/:name', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'task.html'));
 });
 
-app.get('/profile', requireLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'profile.html'));
+app.get('/game/task/:name/edit', requireLogin, (req, res) => {
+    // Strict backend check: If no admin key, block them completely.
+    if (req.query.admin !== process.env.ADMIN_KEY) {
+        return res.status(403).send("<h1>403 Forbidden</h1><p>Admin access required to edit tasks.</p>");
+    }
+    res.sendFile(path.join(__dirname, 'views', 'edit-task.html'));
 });
 
 app.get('/api/me', requireLogin, (req, res) => {
@@ -207,33 +234,10 @@ app.post('/register', (req, res) => {
         if (err) {
             return res.send(`<h1 style="color:red; text-align:center;">Username taken! Hit back.</h1>`);
         }
-        res.redirect(`/login?admin=${process.env.ADMIN_KEY}`); 
+        res.redirect(`/login`); 
     });
 });
 
-app.get('/login', (req, res) => {
-    // CRITICAL FIX: Repaired broken comma syntax
-    res.sendFile(path.join(__dirname, 'views', 'login.html')); 
-});
-
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    
-    const sql = `SELECT * FROM players WHERE username = ? AND password = ?`;
-    db.get(sql, [username, password], (err, user) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Server error");
-        }
-        if (user) {
-            req.session.userId = user.id;
-            req.session.username = user.username;
-            res.redirect(`/`); 
-        } else {
-            res.send(`<h1 style="color:red; text-align:center;">Invalid username or password!</h1>`);
-        }
-    });
-});
 
 // Secret route to see all players
 app.get('/master-list', (req, res) => {
