@@ -70,6 +70,10 @@ db.serialize(() => {
         found_flags TEXT DEFAULT ''
     )`);
 
+    // Create the 'players and tasks' table if it doesn't exist
+
+    // ... players table ...
+
     db.run(`CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
@@ -77,8 +81,11 @@ db.serialize(() => {
         estimated_time TEXT,
         image_url TEXT,
         points INTEGER DEFAULT 100,
-        flag TEXT
+        flag TEXT,
+        detailed_instructions TEXT DEFAULT '',
+        detailed_image_url TEXT DEFAULT ''
     )`);
+
 });
 
 // Cookies
@@ -91,7 +98,7 @@ app.use(session({
 // Main screen / Check to see if its under maintenance
 app.use((req, res, next) => {
     // Change 'true' to 'false' when ready210
-    const isUnderConstruction = true; 
+    const isUnderConstruction = false; 
     res.setHeader('ngrok-skip-browser-warning', 'true'); 
     const palette = {
         bg: '#1a102a',      
@@ -170,18 +177,19 @@ app.get('/api/task/:name', requireLogin, (req, res) => {
 
 // 4. API: Admin route to edit an existing task inline
 // Notice express.json() - this is required to read the JSON data sent by the fetch request
+// 4. API: Admin route to edit an existing task inline
 app.post('/api/task/:name/edit', express.json(), (req, res) => {
     const oldTaskName = req.params.name;
-    const { adminKey, name, description, estimated_time, points, flag } = req.body;
+    const { adminKey, name, description, estimated_time, points, flag, detailed_instructions, detailed_image_url } = req.body;
 
     if (adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
 
-    // Notice it updates WHERE name = oldTaskName
-    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ?, points = ?, flag = ? WHERE name = ?`;
-    db.run(sql, [name, description, estimated_time, points, flag, oldTaskName], function(err) {
+    // Update the SQL to include the new detailed columns
+    const sql = `UPDATE tasks SET name = ?, description = ?, estimated_time = ?, points = ?, flag = ?, detailed_instructions = ?, detailed_image_url = ? WHERE name = ?`;
+    
+    db.run(sql, [name, description, estimated_time, points, flag, detailed_instructions, detailed_image_url, oldTaskName], function(err) {
         if (err) return res.status(500).send(err.message);
         
-        // We send back the new name so the frontend knows where to redirect
         res.status(200).json({ newName: name });
     });
 });
