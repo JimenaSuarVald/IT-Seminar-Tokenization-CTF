@@ -558,8 +558,9 @@ app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req
 app.get('/supersecretcyber-panel/set-tasks', (req, res) => {
     if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
     
-    // Grab the number from the URL and update the game state
-    const count = parseInt(req.query.count) || 1;
+    // FIX: Properly check for numbers so 0 doesn't get rejected!
+    let count = parseInt(req.query.count);
+    if (isNaN(count)) count = 1; 
     gameState.unlockedTasks = count;
     
     // Give the admin a confirmation screen
@@ -569,6 +570,77 @@ app.get('/supersecretcyber-panel/set-tasks', (req, res) => {
             <a href="/supersecretcyber-panel?admin=${process.env.ADMIN_KEY}" style="color:#ffb74d;">Return to Mission Control</a>
         </body>
     `);
+});
+
+// ==========================================
+// --- NEW: PLAYER MANAGEMENT SYSTEM ---
+// ==========================================
+
+app.get('/supersecretcyber-panel/manage-players', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+
+    db.all("SELECT id, username, score FROM players", [], (err, rows) => {
+        if (err) return res.status(500).send("Database error.");
+
+        let html = `
+        <body style="background:#1a102a; color:#ffb74d; font-family:monospace; padding: 40px; text-align: center;">
+            <h1 style="color: #ffb74d; text-shadow: 0 0 10px #ffb74d;">👥 PLAYER MANAGER</h1>
+            <a href="/supersecretcyber-panel?admin=${process.env.ADMIN_KEY}" style="color: #e066a3; text-decoration: none; border: 1px solid #e066a3; padding: 10px; border-radius: 5px; transition: 0.2s;">◄ Back to Mission Control</a>
+            
+            <table style="margin: 40px auto; border-collapse: collapse; width: 80%; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px #ffb74d;">
+                <tr style="background: #ffb74d; color: #1a102a;">
+                    <th style="padding: 15px; border: 1px solid #444;">ID</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Username</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Score</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Actions</th>
+                </tr>
+        `;
+
+        rows.forEach(player => {
+            html += `
+                <tr>
+                    <td style="padding: 15px; border: 1px solid #444;">${player.id}</td>
+                    <td style="padding: 15px; border: 1px solid #444; font-weight: bold;">${player.username}</td>
+                    <td style="padding: 15px; border: 1px solid #444;">
+                        <form action="/api/player/update" method="POST" style="margin:0; display:flex; justify-content:center; gap:10px;">
+                            <input type="hidden" name="adminKey" value="${process.env.ADMIN_KEY}">
+                            <input type="hidden" name="playerId" value="${player.id}">
+                            <input type="number" name="score" value="${player.score}" style="width: 80px; padding: 5px; background: #110a1c; color: white; border: 1px solid #ffb74d; border-radius: 5px; text-align: center; font-family: monospace; font-size: 1.1em;">
+                            <button type="submit" style="background:#4caf50; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px; font-weight:bold;">SAVE</button>
+                        </form>
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #444;">
+                        <form action="/api/player/delete" method="POST" style="margin:0;">
+                            <input type="hidden" name="adminKey" value="${process.env.ADMIN_KEY}">
+                            <input type="hidden" name="playerId" value="${player.id}">
+                            <button type="submit" style="background:#d32f2f; color:white; border:none; padding:8px 15px; cursor:pointer; border-radius:5px; font-weight:bold;" onclick="return confirm('WARNING: Are you sure you want to permanently delete this player?');">DELETE</button>
+                        </form>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</table></body>';
+        res.send(html);
+    });
+});
+
+app.post('/api/player/update', express.urlencoded({ extended: true }), (req, res) => {
+    if (req.body.adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
+    
+    db.run("UPDATE players SET score = ? WHERE id = ?", [req.body.score, req.body.playerId], (err) => {
+        if (err) return res.status(500).send("Error updating player.");
+        res.redirect(`/supersecretcyber-panel/manage-players?admin=${process.env.ADMIN_KEY}`);
+    });
+});
+
+app.post('/api/player/delete', express.urlencoded({ extended: true }), (req, res) => {
+    if (req.body.adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
+    
+    db.run("DELETE FROM players WHERE id = ?", [req.body.playerId], (err) => {
+        if (err) return res.status(500).send("Error deleting player.");
+        res.redirect(`/supersecretcyber-panel/manage-players?admin=${process.env.ADMIN_KEY}`);
+    });
 });
 
 // --- TASK MANAGER (Admin Menu View) ---

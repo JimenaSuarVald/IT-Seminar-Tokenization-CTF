@@ -143,12 +143,14 @@
 
 
         <div class="card">
+
             <h2>TASK UNLOCKER</h2>
             <hr>
             <div class="inline-text">
-                Unlock up to: <input type="number" id="taskCount" class="inline-input" value="1" min="1"> tasks
+                Unlock up to: <input type="number" id="taskCount" class="inline-input" value="1" min="0"> tasks
             </div>
             <button onclick="unlock()"> Update Active Tasks</button>
+
         </div>
 
     <div class="card">
@@ -190,6 +192,13 @@
             <button class="danger-btn" onclick="location.href='/supersecretcyber-panel/manage-tasks?admin=jillian'">🗑️ Open Task Manager</button>
         </div>
     </div>
+
+    <div class="card" style="border-color: #ffb74d;">
+            <h2 style="color: #ffb74d;">👥 PLAYER MANAGEMENT</h2>
+            <hr style="background: linear-gradient(90deg, transparent, #ffb74d, transparent);">
+            <p style="margin-bottom: 20px;">View grid entities, edit scores manually, or permanently terminate accounts.</p>
+            <button onclick="location.href='/supersecretcyber-panel/manage-players?admin=jillian'" style="background: #ffb74d; color: #1a102a; box-shadow: 0 0 15px #ffb74d;">👁️ Open Player Manager</button>
+        </div>
 
     <script>
         function unlock() {
