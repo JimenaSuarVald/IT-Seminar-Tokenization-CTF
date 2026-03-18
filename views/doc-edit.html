@@ -26,7 +26,7 @@
             position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
             background-color: var(--panel-bg, #2a1b40);
             transition: transform 0.3s ease; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 1000;
-            display: flex; flex-direction: column; padding-top: 70px; /* Leaves space for the hamburger */
+            display: flex; flex-direction: column; padding-top: 70px; 
             border-right: 2px solid var(--accent, #e066a3);
         }
         .sidebar.collapsed { transform: translateX(-100%); }
@@ -46,16 +46,27 @@
         .sidebar-menu li a:hover {
             background-color: rgba(224, 102, 163, 0.2); padding-left: 30px; border-left: 5px solid var(--accent, #e066a3);
         }
-        
-        .sign-out { margin-top: auto; border-top: 2px solid var(--accent, #e066a3); background: rgba(211, 47, 47, 0.1); }
-        .sign-out a { color: #d32f2f !important; }
-        .sign-out a:hover { background-color: rgba(211, 47, 47, 0.2); border-left-color: #d32f2f; }
-    
+
+        /* --- DEDICATED SIGN OUT ANCHOR --- */
+        .sign-out-container { 
+            margin-top: auto; 
+            border-top: 2px solid var(--accent, #e066a3); 
+            background: rgba(211, 47, 47, 0.1); 
+        }
+        .sign-out-container a { 
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            color: #d32f2f; text-decoration: none; font-size: 1.1em; 
+            font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s;
+        }
+        .sign-out-container a:hover { 
+            background-color: rgba(211, 47, 47, 0.2); padding-left: 30px; border-left: 5px solid #d32f2f; 
+        }
     </style>
 </head>
 <body>
 
     <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
     <nav class="sidebar collapsed" id="sidebar">
         <ul class="sidebar-menu">
@@ -65,9 +76,11 @@
             <li><a href="/credits" id="sb-cred">👨‍💻 System Architects</a></li>
             
             <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙️ Mission Control</a></li>
-            
-            <li class="sign-out"><a href="/login" id="sb-logout">🚪 Disconnect</a></li>
         </ul>
+        
+        <div class="sign-out-container">
+            <a href="/login" id="sb-logout">🚪 Sign Out</a>
+        </div>
     </nav>
 
     <a href="#" id="cancelLink" style="color: var(--accent); text-decoration: none;">◄ Cancel Edits</a>
@@ -110,7 +123,7 @@
         if (docId !== 'new') loadExistingData();
     });
 
-    // --- UNIVERSAL SIDEBAR LOGIC ---
+// --- UNIVERSAL SIDEBAR LOGIC ---
     function toggleSidebar() { 
         document.getElementById('sidebar').classList.toggle('collapsed'); 
     }

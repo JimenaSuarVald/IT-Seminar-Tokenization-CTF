@@ -15,17 +15,54 @@
             color: var(--text-main); display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width); background-color: var(--panel-bg); display: flex; flex-direction: column;
-            transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 100;
+       /* --- UNIVERSAL FLOATING SIDEBAR --- */
+        .menu-toggle {
+            position: fixed; top: 15px; left: 15px; z-index: 1001;
+            background: var(--bg-dark, #1a102a); border: 2px solid var(--accent, #e066a3); 
+            color: var(--accent, #e066a3); font-size: 1.5em; cursor: pointer; 
+            border-radius: 5px; padding: 5px 12px; transition: 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
-        .sidebar.collapsed { transform: translateX(-100%); position: absolute; height: 100%; }
-        .sidebar-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; display: flex; flex-direction: column; }
-        .sidebar-menu li a { display: block; padding: 20px; color: var(--text-main); text-decoration: none; font-size: 1.2em; transition: 0.2s; }
-        .sidebar-menu li a:hover { background-color: rgba(224, 102, 163, 0.2); padding-left: 25px; border-left: 4px solid var(--accent); }
-        .sign-out { margin-top: auto; background-color: rgba(224, 102, 163, 0.1); width: 100%; }
+        .menu-toggle:hover { background-color: var(--accent, #e066a3); color: white; box-shadow: 0 0 15px var(--accent, #e066a3); }
 
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+            background-color: var(--panel-bg, #2a1b40);
+            transition: transform 0.3s ease; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 1000;
+            display: flex; flex-direction: column; padding-top: 70px; 
+            border-right: 2px solid var(--accent, #e066a3);
+        }
+        .sidebar.collapsed { transform: translateX(-100%); }
+        
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; flex-grow: 1; }
+        
+        /* The dividing line between buttons */
+        .sidebar-menu li { border-bottom: 1px solid var(--accent, #e066a3); }
+        .sidebar-menu li:last-child { border-bottom: none; }
+        
+        /* The text and icons */
+        .sidebar-menu li a {
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            color: var(--text-main, #ffb74d); text-decoration: none; font-size: 1.1em; 
+            font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s;
+        }
+        .sidebar-menu li a:hover {
+            background-color: rgba(224, 102, 163, 0.2); padding-left: 30px; border-left: 5px solid var(--accent, #e066a3);
+        }
+
+        /* --- DEDICATED SIGN OUT ANCHOR --- */
+        .sign-out-container { 
+            margin-top: auto; 
+            border-top: 2px solid var(--accent, #e066a3); 
+            background: rgba(211, 47, 47, 0.1); 
+        }
+        .sign-out-container a { 
+            display: flex; align-items: center; gap: 15px; padding: 20px;
+            color: #d32f2f; text-decoration: none; font-size: 1.1em; 
+            font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s;
+        }
+        .sign-out-container a:hover { 
+            background-color: rgba(211, 47, 47, 0.2); padding-left: 30px; border-left: 5px solid #d32f2f; 
+        }
         /* --- MAIN CONTENT & TOPBAR --- */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; width: 100%; }
         .topbar {
@@ -66,13 +103,21 @@
 </head>
 <body>
 
-    <nav class="sidebar" id="sidebar">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <nav class="sidebar collapsed" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="/documentation">Documentation</a></li>
-            <li><a href="/leaderboard">Leaderboards</a></li>
-            <li><a href="/credits">Credits</a></li>
-            <li class="sign-out"><a href="/login">Sign Out</a></li>
+            <li><a href="/" id="sb-home">🏠 Main Menu</a></li>
+            <li><a href="/documentation" id="sb-docs">📄 Documentation</a></li>
+            <li><a href="/leaderboard" id="sb-lead">🏆 Leaderboards</a></li>
+            <li><a href="/credits" id="sb-cred">👨‍💻 System Architects</a></li>
+            
+            <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙️ Mission Control</a></li>
         </ul>
+        
+        <div class="sign-out-container">
+            <a href="/login" id="sb-logout">🚪 Sign Out</a>
+        </div>
     </nav>
 
     <div class="main-content">
@@ -99,10 +144,32 @@
 
 <script>
 
+    
+
     const urlParams = new URLSearchParams(window.location.search);
     const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    // --- UNIVERSAL SIDEBAR LOGIC ---
+    function toggleSidebar() { 
+        document.getElementById('sidebar').classList.toggle('collapsed'); 
+    }
+    
+    // Auto-attach admin keys to all sidebar links when the page loads
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+        
+        const links = ['sb-home', 'sb-docs', 'sb-lead', 'sb-cred', 'sb-logout'];
+        links.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && adminQuery) el.href += adminQuery;
+        });
 
+        // Show Mission Control button ONLY if they have the admin key in the URL
+        if (urlParams.get('admin') === 'jillian') {
+            document.getElementById('sb-admin-li').style.display = 'block';
+            document.getElementById('sb-admin').href += adminQuery;
+        }
+    });
     function goToProfile() { 
         window.location.href = '/profile' + adminQuery; 
     }
