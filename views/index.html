@@ -31,10 +31,13 @@
         /* Menu Icon & Clock sit side-by-side cleanly at the left edge */
         .topbar-left { display: flex; align-items: center; gap: 20px; position: absolute; left: 20px; height: 100%; }
         
-        /* PERFECTLY CENTERED SQUARE BUTTON */
-        .menu-toggle { background: var(--bg-dark); border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; transition: 0.2s; display: flex; align-items: center; justify-content: center; height: 45px; width: 50px; padding: 0; }
+        /* PERFECTLY CENTERED BUTTON (No Squishing) */
+        .menu-toggle { 
+            background: var(--bg-dark); border: 2px solid var(--accent); color: var(--accent); 
+            font-size: 1.8em; line-height: 1; cursor: pointer; border-radius: 5px; 
+            padding: 5px 12px; transition: 0.2s; display: inline-block; 
+        }
         .menu-toggle:hover { background-color: var(--accent); color: white; box-shadow: 0 0 10px var(--accent); }
-        
         .timer { font-size: 1.5em; font-weight: bold; color: #fff; text-shadow: 0 0 8px var(--accent); }
 
         /* Account Button aligned right */
@@ -122,53 +125,12 @@
     function goToProfile() { 
         window.location.href = '/profile' + adminQuery; 
     }
-    
-    // --- BRUTE FORCE TASK FETCH ---
-    // This runs exactly ONE TIME when the page loads. No complex checks.
-        async function loadTasksImmediately() {
-        try {
-            console.log("Downloading tasks...");
-            // ADDED adminQuery HERE
-            const tasksRes = await fetch('/api/tasks' + adminQuery);
-            const tasks = await tasksRes.json();
-            
-            // ADDED adminQuery HERE
-            const stateRes = await fetch('/api/state' + adminQuery);
+
+        const stateRes = await fetch('/api/state' + adminQuery);
             const state = await stateRes.json();
-            const unlockedLimit = state.unlockedTasks || 1;
-
-            const tasksGrid = document.getElementById('tasks-grid');
-            tasksGrid.innerHTML = ''; 
-
-            if (tasks.length === 0) {
-                tasksGrid.innerHTML = '<h2 style="grid-column: 1/-1; text-align: center; color: red;">No Tasks Found!</h2>';
-                return;
-            }
-
-            tasks.forEach((task, index) => {
-                const isLocked = index >= unlockedLimit;
-                const card = document.createElement('div');
-                card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
-                
-                // ADDED encodeURIComponent(task.name) AND adminQuery TO THE LINK HERE
-                card.innerHTML = `
-                    <a href="/game/task/${encodeURIComponent(task.name)}${adminQuery}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
-                        <img src="${task.image_url}" class="task-image" alt="Task Image">
-                        <div class="task-info">
-                            <h3>${task.name}</h3>
-                            <p>${task.description}</p>
-                            <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
-                        </div>
-                    </a>
-                `;
-                tasksGrid.appendChild(card);
-            });
-            console.log("Tasks successfully drawn to screen!");
-        } catch (error) {
-            console.error("Critical failure loading tasks:", error);
-            document.getElementById('loading-msg').innerText = "Failed to load database. Check Console (F12).";
-        }
-    }
+            
+            // FIX: Explicitly check for undefined so 0 is accepted as a real number!
+            const unlockedLimit = state.unlockedTasks !== undefined ? state.unlockedTasks : 1;
     
 
     // --- SEPARATE TIMER LOOP ---

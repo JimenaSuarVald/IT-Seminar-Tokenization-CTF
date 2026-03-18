@@ -242,7 +242,20 @@ app.get('/', requireLogin, (req, res) => {
 
 
 // --- THE MISSING PLAYER VIEW ROUTE ---
+// --- THE MISSING PLAYER VIEW ROUTE ---
 app.get('/game/task/:name', requireLogin, (req, res) => {
+    
+    // NEW: Hard lock to prevent URL guessing if tasks are set to 0
+    if (gameState.unlockedTasks === 0 && req.query.admin !== process.env.ADMIN_KEY) {
+        return res.status(403).send(`
+            <body style='background:#1a102a; color:#d32f2f; font-family:monospace; text-align:center; padding-top:50px;'>
+                <h1>⛔ SYSTEM LOCKED</h1>
+                <p>Tasks are currently disabled by the Admin.</p>
+                <a href='/' style='color:#ffb74d;'>Return to Dashboard</a>
+            </body>
+        `);
+    }
+
     res.sendFile(path.join(__dirname, 'views', 'task.html'));
 });
 
@@ -349,6 +362,11 @@ app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
         return res.json({ success: false, message: "⛔ SUBMISSIONS LOCKED: The game clock is paused or time is up!" });
     }
     // ----------------------------------
+
+    // If the game is paused, out of time, or tasks are locked, reject the submission immediately
+    if (!gameState.isRunning || currentRemaining <= 0 || gameState.unlockedTasks === 0) {
+        return res.json({ success: false, message: "⛔ SUBMISSIONS LOCKED: The game is paused or tasks are locked!" });
+    }
 
     const taskName = req.params.name;
     const submittedFlag = req.body.flag;
