@@ -188,6 +188,14 @@
             // Ignore small connection blips for the clock
         }
     }
+
+    // --- START THE ENGINES ---
+    // This tells the browser to actually run your functions when the page loads!
+    window.onload = () => {
+        loadTasksImmediately(); // Draw the tasks
+        updateClockLoop();      // Fetch the clock immediately
+        setInterval(updateClockLoop, 1000); // Keep ticking every 1 second
+    };
 </script>
 </body>
 </html>
