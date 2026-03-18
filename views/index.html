@@ -16,11 +16,9 @@
         }
 
        /* --- UNIVERSAL FLOATING SIDEBAR --- */
-        .menu-toggle {
-            position: fixed; top: 15px; left: 15px; z-index: 1001;
-            background: var(--bg-dark, #1a102a); border: 2px solid var(--accent, #e066a3); 
-            color: var(--accent, #e066a3); font-size: 1.5em; cursor: pointer; 
-            border-radius: 5px; padding: 5px 12px; transition: 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        .menu-toggle { 
+            background: var(--bg-dark); border: 2px solid var(--accent); color: var(--accent); 
+            font-size: 1.5em; cursor: pointer; border-radius: 5px; padding: 5px 12px; transition: 0.2s; 
         }
         .menu-toggle:hover { background-color: var(--accent, #e066a3); color: white; box-shadow: 0 0 15px var(--accent, #e066a3); }
 
@@ -73,11 +71,15 @@
         /* --- MAIN CONTENT & TOPBAR --- */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; width: 100%; }
         .topbar {
-            position: relative; height: 100px; background-color: var(--panel-bg); display: flex;
+            position: relative; height: 70px; background-color: var(--panel-bg); display: flex;
             align-items: center; justify-content: center; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        .topbar-left { display: flex; align-items: center; gap: 20px; position: absolute; left: 20px; }
-        .menu-toggle { background: none; border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; padding: 5px 10px; transition: 0.2s; }
+
+        /* 2. Use flexbox 'gap' to guarantee the menu icon and clock NEVER overlap */
+        .topbar-left { 
+            display: flex; align-items: center; gap: 20px; 
+            position: absolute; left: 20px; 
+        }.menu-toggle { background: none; border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; padding: 5px 10px; transition: 0.2s; }
         .menu-toggle:hover { background-color: var(--accent); color: var(--bg-dark); }
         .timer { font-size: 1.5em; font-weight: bold; color: #fff; text-shadow: 0 0 8px var(--accent); }
 
