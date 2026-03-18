@@ -272,7 +272,28 @@ app.post('/api/task/:name/edit', express.json({ limit: '200mb' }), (req, res) =>
     });
 });
 
-// --- POINT DECAY MATH ---
+// --- NEW: Flag Submission Logic with Kahoot Scoring ---
+app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
+    const taskName = req.params.name;
+    const submittedFlag = req.body.flag;
+    const userId = req.session.userId; // <-- This is what the server couldn't find!
+
+    db.get("SELECT id, flag, points FROM tasks WHERE name = ?", [taskName], (err, task) => {
+        if (err || !task) return res.status(404).json({ error: "Task not found." });
+
+        if (task.flag !== submittedFlag) {
+            return res.json({ success: false, message: "❌ Incorrect flag. Try again!" });
+        }
+
+        db.get("SELECT score, found_flags FROM players WHERE id = ?", [userId], (err, player) => {
+            if (err || !player) return res.status(500).json({ error: "Player data error." });
+
+            const solvedTasks = player.found_flags ? player.found_flags.split(',') : [];
+            if (solvedTasks.includes(task.id.toString())) {
+                return res.json({ success: true, message: "⚠️ Flag correct, but you already claimed these points!" });
+            }
+
+            // --- POINT DECAY MATH ---
             db.get("SELECT started_at FROM player_timers WHERE player_id = ? AND task_id = ?", [userId, task.id], (err, timer) => {
                 
                 const startTime = timer ? timer.started_at : Date.now();
@@ -281,11 +302,7 @@ app.post('/api/task/:name/edit', express.json({ limit: '200mb' }), (req, res) =>
                 const pointsLostPerMinute = 2; // Lose 2 points every minute
                 
                 let earnedPoints = task.points - (minutesTaken * pointsLostPerMinute);
-                
-                // --- FIXED: Hard floor to prevent negatives ---
-                // This forces the lowest possible score to be 10 points. 
-                // (You can change the 10 to a 0 if you want them to get zero points for being too late).
-                earnedPoints = Math.max(10, earnedPoints);
+                earnedPoints = Math.max(10, earnedPoints); // Hard floor at 10 points
 
                 // Save the new score
                 solvedTasks.push(task.id);
@@ -301,6 +318,9 @@ app.post('/api/task/:name/edit', express.json({ limit: '200mb' }), (req, res) =>
                     });
                 });
             });
+        });
+    });
+});
 
 //Registration menu
 app.get('/register', (req, res) => {
@@ -493,6 +513,9 @@ app.post('/api/task/delete', express.urlencoded({ extended: true }), (req, res) 
         res.redirect(`/supersecretcyber-panel/manage-tasks?admin=${process.env.ADMIN_KEY}`);
     });
 });
+
+
+
 
 app.listen(port, () => {
     console.log(`Your CTF server is running on port ${port}`);
