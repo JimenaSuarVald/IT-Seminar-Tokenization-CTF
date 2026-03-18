@@ -54,24 +54,26 @@
 </head>
 <body>
 
-    <div class="form-container">
-        <h2> → REGISTER </h2>
-        <p style="color: rgba(255, 183, 77, 0.5); font-size: 0.85em; margin-top: 0; margin-bottom: 25px; font-style: italic;">
-            For the sake of the contest please use your real name
-        </p>
-        
-        <form action="/login" method="POST">
-            <input type="text" name="username" placeholder="Enter Username" required><br>
-            <input type="password" name="password" placeholder="Enter Password" required><br>
-            <button type="submit">ACCESS GRID</button>
-        </form>
+<div class="form-container">
+    <h2> → REGISTER </h2>
+    <p style="color: rgba(255, 183, 77, 0.5); font-size: 0.85em; margin-top: 0; margin-bottom: 25px; font-style: italic;">
+        For the sake of the contest please use your real name
+    </p>
+    
+    <form action="/register" method="POST">
+        <input type="text" name="username" placeholder="Enter Username" required><br>
+        <input type="password" name="password" placeholder="Enter Password" required><br>
+        <button type="submit">JOIN THE GAME</button>
+    </form>
 
-        <div class="links">
-            <p>Not registered? <a href="/register">Register here</a></p>
-            <br>
-            <a href="/leaderboard">VIEW GLOBAL RANKINGS</a>
-        </div>
+    <div class="links">
+        <p>Already registered? <a href="/login">Login here</a></p>
+        <br>
+        <a href="/leaderboard">VIEW GLOBAL RANKINGS</a>
     </div>
+
+ </div>
+    
 
 </body>
 </html>
