@@ -164,30 +164,6 @@ app.get('/', requireLogin, (req, res) => {
 
 
 
-app.get('/api/task/:name', requireLogin, (req, res) => {
-    const taskName = req.params.name;
-    
-    db.get("SELECT * FROM tasks WHERE name = ?", [taskName], (err, task) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        if (!task) return res.status(404).json({ error: "Task not found" });
-
-        // --- FIXED: Check if the user is an admin ---
-        const isAdmin = req.query.admin === process.env.ADMIN_KEY;
-
-        // Only start the timer if they are logged in AND they are NOT an admin
-        if (req.session.userId && !isAdmin) {
-            db.get("SELECT started_at FROM player_timers WHERE player_id = ? AND task_id = ?", [req.session.userId, task.id], (err, timer) => {
-                if (!timer && !err) {
-                    db.run("INSERT INTO player_timers (player_id, task_id, started_at) VALUES (?, ?, ?)", 
-                    [req.session.userId, task.id, Date.now()]);
-                }
-            });
-        }
-        
-        res.json(task);
-    });
-});
-
 // --- THE MISSING PLAYER VIEW ROUTE ---
 app.get('/game/task/:name', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'task.html'));
