@@ -22,22 +22,23 @@
         }
         .menu-toggle:hover { background-color: var(--accent, #e066a3); color: white; box-shadow: 0 0 15px var(--accent, #e066a3); }
 
+        /* The Push Animation for the whole site */
+        body { transition: margin-left 0.3s ease !important; margin-left: 0; }
+        body.sidebar-open { margin-left: 280px; }
+
         .sidebar {
             position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
             background-color: var(--panel-bg, #2a1b40);
             transition: transform 0.3s ease; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 1000;
             display: flex; flex-direction: column; padding-top: 70px; 
             border-right: 2px solid var(--accent, #e066a3);
+            box-sizing: border-box; /* FIX: Keeps the Sign Out button safely on the screen! */
         }
         .sidebar.collapsed { transform: translateX(-100%); }
         
         .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; flex-grow: 1; }
-        
-        /* The dividing line between buttons */
         .sidebar-menu li { border-bottom: 1px solid var(--accent, #e066a3); }
         .sidebar-menu li:last-child { border-bottom: none; }
-        
-        /* The text and icons */
         .sidebar-menu li a {
             display: flex; align-items: center; gap: 15px; padding: 20px;
             color: var(--text-main, #ffb74d); text-decoration: none; font-size: 1.1em; 
@@ -61,6 +62,12 @@
         .sign-out-container a:hover { 
             background-color: rgba(211, 47, 47, 0.2); padding-left: 30px; border-left: 5px solid #d32f2f; 
         }
+
+        /* --- COLLISION FIXES --- */
+        /* Pushes the clock over */
+        .topbar-left { left: 80px !important; }
+        /* Pushes the "Back to Terminal" links over */
+        a[href="javascript:history.back()"] { margin-left: 60px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -122,10 +129,10 @@
 
         if (docId !== 'new') loadExistingData();
     });
-
 // --- UNIVERSAL SIDEBAR LOGIC ---
     function toggleSidebar() { 
         document.getElementById('sidebar').classList.toggle('collapsed'); 
+        document.body.classList.toggle('sidebar-open'); // FIX: Pushes the website over!
     }
     
     // Auto-attach admin keys to all sidebar links when the page loads
