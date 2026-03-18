@@ -162,6 +162,8 @@ app.get('/', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+
+
 app.get('/api/task/:name', requireLogin, (req, res) => {
     const taskName = req.params.name;
     
@@ -184,6 +186,11 @@ app.get('/api/task/:name', requireLogin, (req, res) => {
         
         res.json(task);
     });
+});
+
+// --- THE MISSING PLAYER VIEW ROUTE ---
+app.get('/game/task/:name', requireLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'task.html'));
 });
 
 app.get('/game/task/:name/edit', requireLogin, (req, res) => {
