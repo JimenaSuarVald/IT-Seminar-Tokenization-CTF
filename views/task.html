@@ -16,13 +16,38 @@
         
         .hidden { display: none !important; }
         #editModeBtn { background: #d32f2f; margin-bottom: 20px; display: inline-block; }
+    /* --- RICH TEXT IMAGE FIX --- */
+        #taskContent img {
+            max-width: 100% !important; 
+            height: auto !important; 
+            display: block; 
+            margin: 20px auto; /* Centers the image nicely */
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Optional: adds a nice drop shadow */
+        }
+        
+        /* Also ensures long URLs or code blocks don't break the container */
+        #taskContent {
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            overflow-x: auto;
+        }
+    
     </style>
 </head>
 <body>
 
+
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <a href="javascript:history.back()" style="color: var(--accent); text-decoration: none;">◄ BACK TO TERMINAL</a>
-        <button id="editModeBtn" class="hidden">⚙️ EDIT TASK</button>
+        
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div id="activeTimer" style="color: #ffb74d; font-weight: bold; font-size: 1.2em; display: none;">
+                ⏱ Time Spent: <span id="timeElapsed">00:00</span>
+            </div>
+            
+            <button id="editModeBtn" class="hidden">⚙️ EDIT TASK</button>
+        </div>
     </div>
     <br><br>
 
@@ -64,9 +89,47 @@
                 const task = await response.json();
 
                 // Fill Player View
+                // Fill Player View
                 document.getElementById('taskName').innerText = task.name;
                 document.getElementById('taskTime').innerText = task.estimated_time;
                 document.getElementById('taskDesc').innerHTML = task.description; 
+
+                // --- NEW: Start the Live Timer ---
+                // --- NEW: Start the Live Timer & Point Decay ---
+                if (task.elapsed_ms !== undefined) {
+                    document.getElementById('activeTimer').style.display = 'block';
+                    
+                    let elapsedSeconds = Math.floor(task.elapsed_ms / 1000);
+                    const originalPoints = task.points || 100;
+                    
+                    // IMPORTANT: Make sure these match the math in your server.js!
+                    const pointsLostPerMinute = 2; 
+                    const minimumPoints = 10; 
+                    
+                    setInterval(() => {
+                        elapsedSeconds++;
+                        const minutes = Math.floor(elapsedSeconds / 60);
+                        const seconds = elapsedSeconds % 60;
+                        
+                        // 1. Update the Clock
+                        document.getElementById('timeElapsed').innerText = 
+                            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                            
+                        // 2. Update the Points
+                        let currentPoints = originalPoints - (minutes * pointsLostPerMinute);
+                        currentPoints = Math.max(minimumPoints, currentPoints); // Hard floor at 10 points
+                        
+                        document.getElementById('taskPoints').innerText = currentPoints;
+                        
+                        // Optional visual flair: turn the points red if they hit the absolute minimum
+                        if (currentPoints === minimumPoints) {
+                            document.getElementById('taskPoints').style.color = "#d32f2f";
+                        }
+                    }, 1000);
+                } else {
+                    // If no timer data (like for admins), just show static points
+                    document.getElementById('taskPoints').innerText = task.points || 100;
+                }
                 
                 if (task.image_url) {
                     document.getElementById('taskImage').src = task.image_url;

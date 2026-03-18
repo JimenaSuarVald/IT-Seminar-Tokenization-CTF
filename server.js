@@ -84,6 +84,14 @@ db.serialize(() => {
         points INTEGER DEFAULT 100,
         flag TEXT
     )`);
+
+    // --- NEW: Track when players open a task ---
+    db.run(`CREATE TABLE IF NOT EXISTS player_timers (
+        player_id INTEGER,
+        task_id INTEGER,
+        started_at INTEGER,
+        PRIMARY KEY (player_id, task_id)
+    )`);
 });
 
 // Cookies
@@ -104,7 +112,7 @@ app.use((req, res, next) => {
         accent: '#e066a3',  
     };
 
-    if (isUnderConstruction && req.query.admin !== process.env.ADMIN_KEY && !req.path.startsWith('/leaderboard') && !req.path.startsWith('/api/')&& !req.path.startsWith('/leaderboard') && !req.path.startsWith('/game/')) {
+    if (isUnderConstruction) {
        res.sendFile(path.join(__dirname, 'views', 'wip.html'));
     } else  {
         next(); 
@@ -112,7 +120,6 @@ app.use((req, res, next) => {
 });
 
 app.get('/login', (req, res) => {
-    // CRITICAL FIX: Repaired broken comma syntax
     res.sendFile(path.join(__dirname, 'views', 'login.html')); 
 });
 
@@ -155,8 +162,28 @@ app.get('/', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-app.get('/game/task/:name', requireLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'task.html'));
+app.get('/api/task/:name', requireLogin, (req, res) => {
+    const taskName = req.params.name;
+    
+    db.get("SELECT * FROM tasks WHERE name = ?", [taskName], (err, task) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        if (!task) return res.status(404).json({ error: "Task not found" });
+
+        // --- FIXED: Check if the user is an admin ---
+        const isAdmin = req.query.admin === process.env.ADMIN_KEY;
+
+        // Only start the timer if they are logged in AND they are NOT an admin
+        if (req.session.userId && !isAdmin) {
+            db.get("SELECT started_at FROM player_timers WHERE player_id = ? AND task_id = ?", [req.session.userId, task.id], (err, timer) => {
+                if (!timer && !err) {
+                    db.run("INSERT INTO player_timers (player_id, task_id, started_at) VALUES (?, ?, ?)", 
+                    [req.session.userId, task.id, Date.now()]);
+                }
+            });
+        }
+        
+        res.json(task);
+    });
 });
 
 app.get('/game/task/:name/edit', requireLogin, (req, res) => {
@@ -165,6 +192,11 @@ app.get('/game/task/:name/edit', requireLogin, (req, res) => {
         return res.status(403).send("<h1>403 Forbidden</h1><p>Admin access required to edit tasks.</p>");
     }
     res.sendFile(path.join(__dirname, 'views', 'edit-task.html'));
+});
+
+// Serve the Profile Page
+app.get('/profile', requireLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'profile.html'));
 });
 
 app.get('/api/me', requireLogin, (req, res) => {
@@ -194,10 +226,35 @@ app.get('/api/tasks', requireLogin, (req, res) => {
 
 app.get('/api/task/:name', requireLogin, (req, res) => {
     const taskName = req.params.name;
-    db.get("SELECT * FROM tasks WHERE name = ?", [taskName], (err, row) => {
+    
+    db.get("SELECT * FROM tasks WHERE name = ?", [taskName], (err, task) => {
         if (err) return res.status(500).json({ error: "Database error" });
-        if (!row) return res.status(404).json({ error: "Task not found" });
-        res.json(row);
+        if (!task) return res.status(404).json({ error: "Task not found" });
+
+        const isAdmin = req.query.admin === process.env.ADMIN_KEY;
+
+        if (req.session.userId && !isAdmin) {
+            db.get("SELECT started_at FROM player_timers WHERE player_id = ? AND task_id = ?", [req.session.userId, task.id], (err, timer) => {
+                let startedAt;
+                
+                if (!timer && !err) {
+                    // First time opening! Start the clock.
+                    startedAt = Date.now();
+                    db.run("INSERT INTO player_timers (player_id, task_id, started_at) VALUES (?, ?, ?)", 
+                    [req.session.userId, task.id, startedAt]);
+                } else {
+                    // They've been here before. Get the original start time.
+                    startedAt = timer.started_at;
+                }
+                
+                // Calculate elapsed milliseconds securely on the server
+                task.elapsed_ms = Date.now() - startedAt;
+                res.json(task);
+            });
+        } else {
+            // If admin, just send the task with no timer data
+            res.json(task);
+        }
     });
 });
 
@@ -215,45 +272,35 @@ app.post('/api/task/:name/edit', express.json({ limit: '200mb' }), (req, res) =>
     });
 });
 
-// --- NEW: Flag Submission Logic ---
-app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
-    const taskName = req.params.name;
-    const submittedFlag = req.body.flag;
-    const userId = req.session.userId;
+// --- POINT DECAY MATH ---
+            db.get("SELECT started_at FROM player_timers WHERE player_id = ? AND task_id = ?", [userId, task.id], (err, timer) => {
+                
+                const startTime = timer ? timer.started_at : Date.now();
+                const minutesTaken = Math.floor((Date.now() - startTime) / 60000);
+                
+                const pointsLostPerMinute = 2; // Lose 2 points every minute
+                
+                let earnedPoints = task.points - (minutesTaken * pointsLostPerMinute);
+                
+                // --- FIXED: Hard floor to prevent negatives ---
+                // This forces the lowest possible score to be 10 points. 
+                // (You can change the 10 to a 0 if you want them to get zero points for being too late).
+                earnedPoints = Math.max(10, earnedPoints);
 
-    // 1. Look up the correct flag and points for this task
-    db.get("SELECT id, flag, points FROM tasks WHERE name = ?", [taskName], (err, task) => {
-        if (err || !task) return res.status(404).json({ error: "Task not found." });
+                // Save the new score
+                solvedTasks.push(task.id);
+                const newFlags = solvedTasks.join(',');
+                const newScore = player.score + earnedPoints;
 
-        // 2. Check if the submitted flag is wrong
-        if (task.flag !== submittedFlag) {
-            return res.json({ success: false, message: "❌ Incorrect flag. Try again!" });
-        }
-
-        // 3. If correct, check the player's history
-        db.get("SELECT score, found_flags FROM players WHERE id = ?", [userId], (err, player) => {
-            if (err || !player) return res.status(500).json({ error: "Player data error." });
-
-            // found_flags is stored as a comma-separated list of Task IDs (e.g., "1,4,5")
-            const solvedTasks = player.found_flags ? player.found_flags.split(',') : [];
-            
-            // 4. Prevent double-scoring
-            if (solvedTasks.includes(task.id.toString())) {
-                return res.json({ success: true, message: "⚠️ Flag correct, but you already claimed these points!" });
-            }
-
-            // 5. Update their record with new points and the new task ID
-            solvedTasks.push(task.id);
-            const newFlags = solvedTasks.join(',');
-            const newScore = player.score + task.points;
-
-            db.run("UPDATE players SET score = ?, found_flags = ? WHERE id = ?", [newScore, newFlags, userId], (err) => {
-                if (err) return res.status(500).json({ error: "Failed to update score." });
-                res.json({ success: true, message: `🎉 Access Granted! ${task.points} points awarded.` });
+                db.run("UPDATE players SET score = ?, found_flags = ? WHERE id = ?", [newScore, newFlags, userId], (err) => {
+                    if (err) return res.status(500).json({ error: "Failed to update score." });
+                    
+                    res.json({ 
+                        success: true, 
+                        message: `🎉 Flag Correct! You finished in ${minutesTaken} minutes and earned ${earnedPoints} points.` 
+                    });
+                });
             });
-        });
-    });
-});
 
 //Registration menu
 app.get('/register', (req, res) => {
