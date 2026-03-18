@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reading Archive</title>
+    <style>
+        :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; }
+        body { margin: 0; font-family: 'Courier New', monospace; background-color: var(--bg-dark); color: white; display: flex; flex-direction: column; height: 100vh; }
+        .topbar { height: 60px; background: var(--panel-bg); display: flex; align-items: center; padding: 0 20px; border-bottom: 2px solid var(--accent); }
+        .back-btn { color: var(--text-main); text-decoration: none; font-weight: bold; font-size: 1.2em; transition: 0.2s; }
+        .back-btn:hover { color: var(--accent); }
+        
+        .reader-container { max-width: 800px; margin: 40px auto; padding: 40px; background: var(--panel-bg); border-radius: 10px; border: 1px solid rgba(224, 102, 163, 0.3); width: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow-y: auto;}
+        h1 { color: var(--text-main); border-bottom: 1px dashed var(--accent); padding-bottom: 15px; margin-top: 0; }
+        
+        /* Rich Text Formatting */
+        .content { line-height: 1.6; font-size: 1.1em; }
+        .content img { max-width: 100%; border-radius: 5px; margin: 15px 0; }
+        
+        #editBtn { display: none; background: #d32f2f; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-family: inherit; margin-left: auto; font-weight: bold;}
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <a href="#" id="backLink" class="back-btn">◄ Back to Index</a>
+        <button id="editBtn" onclick="editDoc()">⚙️ Edit Document</button>
+    </div>
+
+    <div class="reader-container">
+        <h1 id="docTitle">Loading...</h1>
+        <div id="docContent" class="content">Decrypting files...</div>
+    </div>
+
+<script>
+    const docId = window.location.pathname.split('/').pop();
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+    
+    document.getElementById('backLink').href = '/documentation' + adminQuery;
+
+    if (urlParams.get('admin') === 'jillian') {
+        document.getElementById('editBtn').style.display = 'block';
+    }
+
+    async function loadDoc() {
+        const res = await fetch(`/api/document/${docId}${adminQuery}`);
+        if (!res.ok) { document.getElementById('docTitle').innerText = "ERROR 404"; return; }
+        const doc = await res.json();
+        document.getElementById('docTitle').innerText = doc.title;
+        document.getElementById('docContent').innerHTML = doc.content;
+    }
+
+    function editDoc() { window.location.href = `/documentation/edit/${docId}${adminQuery}`; }
+    window.onload = loadDoc;
+</script>
+</body>
+</html>

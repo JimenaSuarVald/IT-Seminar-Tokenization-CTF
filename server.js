@@ -93,6 +93,14 @@ db.serialize(() => {
         completed_at INTEGER DEFAULT NULL,
         PRIMARY KEY (player_id, task_id)
     )`);
+
+    // --- NEW: Documentation Table ---
+    db.run(`CREATE TABLE IF NOT EXISTS documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        content TEXT,
+        created_at INTEGER
+    )`);
 });
 
 // Cookies
@@ -118,6 +126,74 @@ app.use((req, res, next) => {
     } else  {
         next(); 
     }
+});
+
+// ==========================================
+// --- DOCUMENTATION SYSTEM ROUTES ---
+// ==========================================
+
+// 1. Serve the Index Page
+app.get('/documentation', requireLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'documentation.html'));
+});
+
+// 2. Serve the Reader Page
+app.get('/documentation/read/:id', requireLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'doc-view.html'));
+});
+
+// 3. Serve the Editor Page
+app.get('/documentation/edit/:id', requireLogin, (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Admin only.");
+    res.sendFile(path.join(__dirname, 'views', 'doc-edit.html'));
+});
+
+// 4. API: Get all documents for the index
+app.get('/api/documents', requireLogin, (req, res) => {
+    db.all("SELECT id, title FROM documents ORDER BY id ASC", [], (err, rows) => {
+        if (err) return res.status(500).json([]);
+        res.json(rows);
+    });
+});
+
+// 5. API: Get a specific document
+app.get('/api/document/:id', requireLogin, (req, res) => {
+    db.get("SELECT * FROM documents WHERE id = ?", [req.params.id], (err, doc) => {
+        if (err || !doc) return res.status(404).json({ error: "Not found" });
+        res.json(doc);
+    });
+});
+
+// 6. API: Save or Update a document
+app.post('/api/document/save', express.json(), (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Denied");
+    
+    const { id, title, content } = req.body;
+    
+    if (id === 'new') {
+        db.run("INSERT INTO documents (title, content, created_at) VALUES (?, ?, ?)", [title, content, Date.now()], function(err) {
+            if (err) return res.status(500).json({ success: false });
+            res.json({ success: true, newId: this.lastID });
+        });
+    } else {
+        db.run("UPDATE documents SET title = ?, content = ? WHERE id = ?", [title, content, id], (err) => {
+            if (err) return res.status(500).json({ success: false });
+            res.json({ success: true, newId: id });
+        });
+    }
+});
+
+// 7. API: Delete a document
+app.post('/api/document/delete/:id', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Denied");
+    db.run("DELETE FROM documents WHERE id = ?", [req.params.id], (err) => {
+        res.json({ success: !err });
+    });
+});
+
+// --- CREDITS PAGE ---
+app.get('/credits', requireLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'credits.html'));
 });
 
 app.get('/login', (req, res) => {
@@ -262,9 +338,21 @@ app.post('/api/task/:name/edit', upload.single('taskImage'), (req, res) => {
 
 // --- NEW: Flag Submission Logic with Kahoot Scoring ---
 app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
+    let currentRemaining = gameState.secondsLeft;
+    if (gameState.isRunning && gameState.lastTick) {
+        const elapsed = Math.floor((Date.now() - gameState.lastTick) / 1000);
+        currentRemaining = Math.max(0, gameState.secondsLeft - elapsed);
+    }
+
+    // If the game is paused or out of time, reject the submission immediately
+    if (!gameState.isRunning || currentRemaining <= 0) {
+        return res.json({ success: false, message: "⛔ SUBMISSIONS LOCKED: The game clock is paused or time is up!" });
+    }
+    // ----------------------------------
+
     const taskName = req.params.name;
     const submittedFlag = req.body.flag;
-    const userId = req.session.userId; // <-- This is what the server couldn't find!
+    const userId = req.session.userId;
 
     db.get("SELECT id, flag, points FROM tasks WHERE name = ?", [taskName], (err, task) => {
         if (err || !task) return res.status(404).json({ error: "Task not found." });

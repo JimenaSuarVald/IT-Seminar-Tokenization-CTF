@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Edit Archive</title>
+    <style>
+        :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; }
+        body { margin: 0; padding: 30px; font-family: 'Courier New', monospace; background: var(--bg-dark); color: white; }
+        .editor-card { max-width: 800px; margin: 0 auto; background: var(--panel-bg); padding: 30px; border-radius: 10px; border: 1px solid var(--accent); }
+        input[type="text"] { width: 100%; padding: 15px; margin: 15px 0; background: #110a1c; border: 1px solid var(--accent); color: white; font-family: inherit; font-size: 1.2em; box-sizing: border-box; }
+        #editor-container { height: 400px; background: white; color: black; border-radius: 0 0 5px 5px; margin-bottom: 20px;}
+        button { background: var(--accent); color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; font-family: inherit;}
+        .danger { background: #d32f2f; margin-left: 15px; }
+    </style>
+</head>
+<body>
+    <a href="#" id="cancelLink" style="color: var(--accent); text-decoration: none;">◄ Cancel Edits</a>
+    <br><br>
+
+    <div class="editor-card">
+        <h2 style="color: var(--text-main); margin-top: 0;">DOCUMENT EDITOR</h2>
+        
+        <label>Document Title:</label>
+        <input type="text" id="docTitle" placeholder="e.g., Rules of Engagement">
+        
+        <label>Document Body:</label>
+        <div id="editor-container"></div>
+
+        <div style="margin-top: 20px; display: flex; align-items: center;">
+            <button onclick="saveDoc()">💾 Save Document</button>
+            <button onclick="deleteDoc()" class="danger" id="deleteBtn">🗑️ Delete</button>
+            <span id="status" style="margin-left: 15px; color: #4caf50;"></span>
+        </div>
+    </div>
+
+<script>
+    document.write('<script src="https://cdn.quilljs.com/1.3.6/quill.js"><\/script>');
+    
+    const docId = window.location.pathname.split('/').pop();
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+    
+    document.getElementById('cancelLink').href = '/documentation' + adminQuery;
+
+    if (docId === 'new') { document.getElementById('deleteBtn').style.display = 'none'; }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        window.quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: { toolbar: [ [{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link', 'image', 'code-block'], ['clean'] ] }
+        });
+
+        if (docId !== 'new') loadExistingData();
+    });
+
+    async function loadExistingData() {
+        const res = await fetch(`/api/document/${docId}${adminQuery}`);
+        if(res.ok) {
+            const doc = await res.json();
+            document.getElementById('docTitle').value = doc.title;
+            window.quill.root.innerHTML = doc.content;
+        }
+    }
+
+    async function saveDoc() {
+        const title = document.getElementById('docTitle').value;
+        const content = window.quill.root.innerHTML;
+        const status = document.getElementById('status');
+        
+        const res = await fetch(`/api/document/save${adminQuery}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: docId, title, content })
+        });
+        
+        if(res.ok) {
+            const data = await res.json();
+            status.innerText = "✔ Saved!";
+            setTimeout(() => window.location.href = `/documentation/read/${data.newId}${adminQuery}`, 1000);
+        } else {
+            status.innerText = "❌ Error saving.";
+        }
+    }
+
+    async function deleteDoc() {
+        if(!confirm("Are you sure you want to delete this document forever?")) return;
+        const res = await fetch(`/api/document/delete/${docId}${adminQuery}`, { method: 'POST' });
+        if(res.ok) window.location.href = '/documentation' + adminQuery;
+    }
+</script>
+</body>
+</html>

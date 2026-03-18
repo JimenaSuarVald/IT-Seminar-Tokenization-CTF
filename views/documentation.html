@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CTF | Documentation</title>
+    <style>
+        :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; --sidebar-width: 250px; }
+        body { margin: 0; font-family: 'Courier New', monospace; background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        /* Sidebar & Topbar Styles */
+        .sidebar { width: var(--sidebar-width); background-color: var(--panel-bg); display: flex; flex-direction: column; transition: 0.3s; z-index: 100; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+        .sidebar.collapsed { transform: translateX(-100%); position: absolute; height: 100%; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; display: flex; flex-direction: column; }
+        .sidebar-menu li a { display: block; padding: 20px; color: var(--text-main); text-decoration: none; font-size: 1.2em; transition: 0.2s; }
+        .sidebar-menu li a:hover { background-color: rgba(224, 102, 163, 0.2); border-left: 4px solid var(--accent); }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .topbar { height: 80px; background-color: var(--panel-bg); display: flex; align-items: center; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); flex-shrink: 0; }
+        .menu-toggle { background: none; border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; padding: 5px 10px; }
+        
+        /* Content Styles */
+        .doc-container { padding: 40px; max-width: 900px; margin: 0 auto; width: 100%; }
+        h1 { text-shadow: 0 0 15px var(--accent); text-transform: uppercase; margin-bottom: 30px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        .doc-list { display: flex; flex-direction: column; gap: 15px; }
+        .doc-item { background: var(--panel-bg); padding: 20px; border-radius: 10px; border: 1px solid rgba(224, 102, 163, 0.3); display: flex; justify-content: space-between; align-items: center; transition: 0.2s; cursor: pointer; }
+        .doc-item:hover { border-color: var(--accent); box-shadow: 0 0 15px rgba(224, 102, 163, 0.2); transform: translateX(5px); }
+        .doc-title { font-size: 1.3em; color: white; font-weight: bold; }
+        
+        .admin-controls { margin-bottom: 20px; display: none; }
+        button { background: var(--accent); color: white; border: none; padding: 10px 20px; font-weight: bold; font-family: inherit; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/" id="home-link">◄ Back to Terminal</a></li>
+            <li><a href="/documentation" style="background: rgba(224,102,163,0.2); border-left: 4px solid var(--accent);">Documentation</a></li>
+            <li><a href="/leaderboard" id="lead-link">Leaderboards</a></li>
+            <li><a href="/credits" id="cred-link">Credits</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        <header class="topbar">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">☰</button>
+        </header>
+
+        <div class="doc-container">
+            <h1>SYSTEM ARCHIVES</h1>
+            
+            <div class="admin-controls" id="adminPanel">
+                <button onclick="createNewDoc()">➕ Create New Entry</button>
+            </div>
+
+            <div class="doc-list" id="docList">
+                <p>Loading archives...</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+    
+    document.getElementById('home-link').href = '/' + adminQuery;
+    document.getElementById('lead-link').href = '/leaderboard' + adminQuery;
+    document.getElementById('cred-link').href = '/credits' + adminQuery;
+
+    if (urlParams.get('admin') === 'jillian') {
+        document.getElementById('adminPanel').style.display = 'block';
+    }
+
+    async function loadDocs() {
+        const res = await fetch('/api/documents' + adminQuery);
+        const docs = await res.json();
+        const list = document.getElementById('docList');
+        list.innerHTML = '';
+
+        if (docs.length === 0) { list.innerHTML = '<p>No documents found in the archive.</p>'; return; }
+
+        docs.forEach(doc => {
+            const div = document.createElement('div');
+            div.className = 'doc-item';
+            div.innerHTML = `<span class="doc-title">${doc.title}</span> <span style="color:var(--accent);">Read ➔</span>`;
+            div.onclick = () => window.location.href = `/documentation/read/${doc.id}${adminQuery}`;
+            list.appendChild(div);
+        });
+    }
+
+    function createNewDoc() { window.location.href = `/documentation/edit/new${adminQuery}`; }
+    window.onload = loadDocs;
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF | System Architects</title>
+    <style>
+        /* --- CORE PALETTE & TYPOGRAPHY --- */
+        :root {
+            --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; --sidebar-width: 250px;
+        }
+
+        body {
+            margin: 0; font-family: 'Courier New', Courier, monospace; background-color: var(--bg-dark);
+            color: var(--text-main); display: flex; height: 100vh; overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width); background-color: var(--panel-bg); display: flex; flex-direction: column;
+            transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 100;
+        }
+        .sidebar.collapsed { transform: translateX(-100%); position: absolute; height: 100%; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; display: flex; flex-direction: column; }
+        .sidebar-menu li a { display: block; padding: 20px; color: var(--text-main); text-decoration: none; font-size: 1.2em; transition: 0.2s; }
+        .sidebar-menu li a:hover { background-color: rgba(224, 102, 163, 0.2); padding-left: 25px; border-left: 4px solid var(--accent); }
+        .sign-out { margin-top: auto; background-color: rgba(224, 102, 163, 0.1); width: 100%; }
+
+        /* --- MAIN CONTENT & TOPBAR --- */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; width: 100%; overflow-y: auto; }
+        .topbar {
+            position: relative; height: 100px; background-color: var(--panel-bg); display: flex;
+            align-items: center; justify-content: center; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); flex-shrink: 0;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 20px; position: absolute; left: 20px; }
+        .menu-toggle { background: none; border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; padding: 5px 10px; transition: 0.2s; }
+        .menu-toggle:hover { background-color: var(--accent); color: var(--bg-dark); }
+        
+        .topbar-right {
+            position: absolute; right: 20px; display: flex; flex-direction: row; 
+            align-items: center; gap: 12px; cursor: pointer; transition: transform 0.2s;
+        }
+        .topbar-right:hover { transform: scale(1.05); }
+        .icon-circle {
+            width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main);
+            display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark);
+        }
+        .icon-circle img { width: 24px; height: 24px; display: block; margin: 0 auto; }
+
+        /* --- CREDITS GRID --- */
+        .header-section { text-align: center; padding: 40px 20px 10px 20px; }
+        .header-section h1 { font-size: 2.5em; text-shadow: 0 0 15px var(--accent); margin-bottom: 10px; }
+        .header-section p { color: #ccc; font-size: 1.2em; max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+        .credits-container { padding: 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; }
+        
+        .credit-card { 
+            background-color: var(--panel-bg); border-radius: 15px; padding: 30px; width: 300px; 
+            text-align: center; border: 1px solid rgba(224, 102, 163, 0.3); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s; 
+        }
+        .credit-card:hover { transform: translateY(-10px); box-shadow: 0 10px 25px rgba(224, 102, 163, 0.4); border-color: var(--accent); }
+        
+        .avatar { width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--accent); object-fit: cover; margin-bottom: 20px; background-color: #000; }
+        .credit-card h2 { margin: 0 0 5px 0; color: #fff; }
+        .role { color: var(--accent); font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
+        .bio { color: #ccc; font-size: 0.95em; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar" id="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/" id="home-link">Main menu</a></li>
+            <li><a href="/documentation" id="doc-link">Documentation</a></li>
+            <li><a href="/leaderboard" id="lead-link">Leaderboards</a></li>
+            <li><a href="/credits" id="cred-link" style="background-color: rgba(224, 102, 163, 0.2); border-left: 4px solid var(--accent);">Credits</a></li>
+            <li class="sign-out"><a href="/login" id="logout-link">Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            </div>
+            
+            <div class="topbar-right" onclick="goToProfile()">
+                <div class="icon-circle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" style="width: 26px; height: 26px;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <span style="font-weight: bold; letter-spacing: 1px;">Account</span>
+            </div>
+        </header>
+
+        <div class="header-section">
+            <h1>SYSTEM ARCHITECTS</h1>
+            <p>The Tokenization & Embeddings team responsible for constructing the grid. <br>Without them, there would only be zeroes.</p>
+        </div>
+
+        <main class="credits-container">
+            
+            <div class="credit-card">
+                <img src="https://via.placeholder.com/150/1a102a/e066a3?text=AVATAR" alt="Profile" class="avatar">
+                <h2>Jillian</h2>
+                <div class="role">// LEAD ARCHITECT</div>
+                <div class="bio">
+                    Constructed the core framework, database architecture, and mission control systems. Prefers doing everything over GitHub.
+                </div>
+            </div>
+
+            <div class="credit-card">
+                <img src="https://via.placeholder.com/150/1a102a/ffb74d?text=AVATAR" alt="Profile" class="avatar" style="border-color: var(--text-main);">
+                <h2>Team Member 2</h2>
+                <div class="role">// EMBEDDINGS SPECIALIST</div>
+                <div class="bio">
+                    Designed the challenges, mapped out the tokenization schemas, and ensured the servers didn't catch on fire during deployment.
+                </div>
+            </div>
+
+            </main>
+    </div>
+
+<script>
+    // Keep the admin query intact for navigation
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+
+    // Update sidebar links to include the admin key if it exists
+    document.getElementById('home-link').href = '/' + adminQuery;
+    document.getElementById('doc-link').href = '/documentation' + adminQuery;
+    document.getElementById('lead-link').href = '/leaderboard' + adminQuery;
+    document.getElementById('cred-link').href = '/credits' + adminQuery;
+    document.getElementById('logout-link').href = '/login' + adminQuery;
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function goToProfile() { window.location.href = '/profile' + adminQuery; }
+</script>
+</body>
+</html>
