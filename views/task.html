@@ -103,34 +103,34 @@
                     
                     let elapsedSeconds = Math.floor(task.elapsed_ms / 1000);
                     const originalPoints = task.points || 100;
-                    
-                    // IMPORTANT: Make sure these match the math in your server.js!
                     const pointsLostPerMinute = 2; 
                     const minimumPoints = 10; 
-                    
-                    setInterval(() => {
-                        elapsedSeconds++;
-                        const minutes = Math.floor(elapsedSeconds / 60);
-                        const seconds = elapsedSeconds % 60;
+
+                    // Function to update UI (Clock and Points)
+                    const updateUI = (seconds) => {
+                        const mins = Math.floor(seconds / 60);
+                        const secs = seconds % 60;
+                        document.getElementById('timeElapsed').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                         
-                        // 1. Update the Clock
-                        document.getElementById('timeElapsed').innerText = 
-                            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                            
-                        // 2. Update the Points
-                        let currentPoints = originalPoints - (minutes * pointsLostPerMinute);
-                        currentPoints = Math.max(minimumPoints, currentPoints); // Hard floor at 10 points
-                        
+                        let currentPoints = originalPoints - (mins * pointsLostPerMinute);
+                        currentPoints = Math.max(minimumPoints, currentPoints);
                         document.getElementById('taskPoints').innerText = currentPoints;
-                        
-                        // Optional visual flair: turn the points red if they hit the absolute minimum
-                        if (currentPoints === minimumPoints) {
-                            document.getElementById('taskPoints').style.color = "#d32f2f";
-                        }
-                    }, 1000);
-                } else {
-                    // If no timer data (like for admins), just show static points
-                    document.getElementById('taskPoints').innerText = task.points || 100;
+                    };
+
+                    // Show the initial time sent by server
+                    updateUI(elapsedSeconds);
+
+                    // ONLY start the interval if the task is NOT completed
+                    if (!task.isCompleted) {
+                        setInterval(() => {
+                            elapsedSeconds++;
+                            updateUI(elapsedSeconds);
+                        }, 1000);
+                    } else {
+                        // Optional: Mark the timer as finished visually
+                        document.getElementById('activeTimer').style.color = "#4caf50";
+                        document.getElementById('timeElapsed').innerText += " (COMPLETED)";
+                    }
                 }
                 
                 if (task.image_url) {

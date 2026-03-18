@@ -90,6 +90,7 @@ db.serialize(() => {
         player_id INTEGER,
         task_id INTEGER,
         started_at INTEGER,
+        completed_at INTEGER DEFAULT NULL,
         PRIMARY KEY (player_id, task_id)
     )`);
 });
@@ -217,23 +218,24 @@ app.get('/api/task/:name', requireLogin, (req, res) => {
         const isAdmin = req.query.admin === process.env.ADMIN_KEY;
 
         if (req.session.userId && !isAdmin) {
-            db.get("SELECT started_at FROM player_timers WHERE player_id = ? AND task_id = ?", [req.session.userId, task.id], (err, timer) => {
+            db.get("SELECT started_at, completed_at FROM player_timers WHERE player_id = ? AND task_id = ?", [req.session.userId, task.id], (err, timer) => {
                 let startedAt;
                 
                 if (!timer && !err) {
-                    // First time opening! Start the clock.
                     startedAt = Date.now();
-                    db.run("INSERT INTO player_timers (player_id, task_id, started_at) VALUES (?, ?, ?)", 
-                    [req.session.userId, task.id, startedAt]);
+                    db.run("INSERT INTO player_timers (player_id, task_id, started_at) VALUES (?, ?, ?)", [req.session.userId, task.id, startedAt]);
                 } else {
-                    // They've been here before. Get the original start time.
                     startedAt = timer.started_at;
                 }
                 
-                // Calculate elapsed milliseconds securely on the server
-                task.elapsed_ms = Date.now() - startedAt;
+                // NEW: If they finished, calculate elapsed time based on completion, not "now"
+                const endTime = (timer && timer.completed_at) ? timer.completed_at : Date.now();
+                task.elapsed_ms = endTime - startedAt;
+                task.isCompleted = !!(timer && timer.completed_at); // Tell frontend if it's finished
+                
                 res.json(task);
             });
+        
         } else {
             // If admin, just send the task with no timer data
             res.json(task);
@@ -298,10 +300,14 @@ app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
                 db.run("UPDATE players SET score = ?, found_flags = ? WHERE id = ?", [newScore, newFlags, userId], (err) => {
                     if (err) return res.status(500).json({ error: "Failed to update score." });
                     
+                    // NEW: Record the completion time in the timers table
+                    db.run("UPDATE player_timers SET completed_at = ? WHERE player_id = ? AND task_id = ?", [Date.now(), userId, task.id]);
+
                     res.json({ 
                         success: true, 
                         message: `🎉 Flag Correct! You finished in ${minutesTaken} minutes and earned ${earnedPoints} points.` 
                     });
+                
                 });
             });
         });
