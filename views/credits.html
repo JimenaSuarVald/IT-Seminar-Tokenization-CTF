@@ -111,6 +111,23 @@
         .role { color: var(--accent); font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
         .bio { color: #ccc; font-size: 0.95em; line-height: 1.5; }
     
+        /* --- CONTACT OVERLAY --- */
+        .credit-card { position: relative; cursor: pointer; overflow: hidden; }
+        .contact-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 16, 42, 0.95); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: 0.3s ease-in-out;
+            border-radius: 15px; padding: 20px; box-sizing: border-box;
+            backdrop-filter: blur(4px);
+        }
+        .credit-card.show-contact .contact-overlay { opacity: 1; pointer-events: auto; }
+        
+        .contact-item {
+            color: white; text-decoration: none; font-size: 1.1em; margin: 10px 0;
+            display: block; transition: 0.2s; border-bottom: 1px dashed transparent;
+        }
+        .contact-item:hover { color: var(--accent); border-bottom: 1px dashed var(--accent); }
         
     </style>
 </head>
@@ -150,39 +167,57 @@
 
         <div class="header-section">
             <h1>SYSTEM ARCHITECTS</h1>
-            <p>The Tokenization & Embeddings team responsible for constructing the grid. <br>Without them, there would only be zeroes.</p>
+            <p>The Tokenization & Embeddings team responsible for constructing the grid. <br>Click to see contact information!</p>
         </div>
 
         <main class="credits-container">
             
-            <div class="credit-card">
+            <div class="credit-card" onclick="this.classList.toggle('show-contact')">
                 <img src="/jimena.jpeg" alt="Profile" class="avatar">
                 <h2>Jimena Suárez-Valdés</h2>
                 <div class="role">// Website development and Tokenizer research</div>
                 <div class="bio">
                     Computer science student with a passion for heavier and electronic music, wishes to work as a synthesizer specialist.
                 </div>
+                <div class="contact-overlay">
+                    <h2 style="color: var(--text-main);">COMM LINK</h2>
+                    <a href="jimenasuarezvaldesss@gmail.com" class="contact-item">✉ Email Jimena</a>
+                    <a href="https://github.com/JimenaSuarVald" target="_blank" class="contact-item">GitHub Profile</a>
+                    <p style="color: #666; font-size: 0.8em; margin-top: 20px;">[ Click anywhere to close ]</p>
+                </div>
             </div>
 
-            <div class="credit-card">
-                <img src="https://via.placeholder.com/150/1a102a/ffb74d?text=AVATAR" alt="Profile" class="avatar" style="border-color: var(--text-main);">
+            <div class="credit-card" onclick="this.classList.toggle('show-contact')">
+                <img src="https://via.placeholder.com/150/1a102a/ffb74d?text=AVATAR" alt="Profile" class="avatar">
                 <h2>Bernardino Gómez Mendoza</h2>
                 <div class="role">// Tasks designer and Embeddings researcher</div>
                 <div class="bio">
                     Info extra
                 </div>
+                <div class="contact-overlay">
+                    <h2 style="color: var(--text-main);">COMM LINK</h2>
+                    <a href="mailto:bernardino@example.com" class="contact-item">✉ Email Bernardino</a>
+                    <a href="https://github.com/bernardino" target="_blank" class="contact-item"> GitHub Profile</a>
+                    <p style="color: #666; font-size: 0.8em; margin-top: 20px;">[ Click anywhere to close ]</p>
+                </div>
             </div>
 
-                        <div class="credit-card">
-                <img src="https://via.placeholder.com/150/1a102a/ffb74d?text=AVATAR" alt="Profile" class="avatar" style="border-color: var(--text-main);">
+            <div class="credit-card" onclick="this.classList.toggle('show-contact')">
+                <img src="https://via.placeholder.com/150/1a102a/ffb74d?text=AVATAR" alt="Profile" class="avatar">
                 <h2>Sofía Serrano Pinzón</h2>
                 <div class="role">// Tasks designer and AI researcher</div>
                 <div class="bio">
                     Info extra
                 </div>
+                <div class="contact-overlay">
+                    <h2 style="color: var(--text-main);">COMM LINK</h2>
+                    <a href="mailto:sofia@example.com" class="contact-item">✉ Email Sofía</a>
+                    <a href="https://github.com/sofia" target="_blank" class="contact-item"> GitHub Profile</a>
+                    <p style="color: #666; font-size: 0.8em; margin-top: 20px;">[ Click anywhere to close ]</p>
+                </div>
             </div>
 
-            </main>
+        </main>
     </div>
 
 <script>
