@@ -153,42 +153,41 @@
 
     // --- SEPARATE TIMER LOOP ---
     // This only updates the clock. It doesn't touch the tasks anymore.
+       // --- SEPARATE TIMER LOOP ---
     async function updateClockLoop() {
         try {
-const stateRes = await fetch('/api/state' + adminQuery, { cache: 'no-store' });
+            const stateRes = await fetch('/api/state' + adminQuery, { cache: 'no-store' });
             const state = await stateRes.json();
             const timerDisplay = document.getElementById('countdown-timer');
             
-            if (!state.isRunning) {
-                timerDisplay.innerText = "WAITING FOR ADMIN...";
-                return;
-            }
-            if (state.timeRemaining <= 0) {
+            if (state.timeRemaining <= 0 && state.isRunning) {
                 timerDisplay.innerText = "TIME UP!";
                 timerDisplay.style.color = "red";
                 return;
             }
             
+            // Format the raw seconds into HH:MM:SS
             const hours = Math.floor(state.timeRemaining / 3600);
             const minutes = Math.floor((state.timeRemaining % 3600) / 60);
             const seconds = state.timeRemaining % 60;
-            timerDisplay.innerText = 
+            
+            let timeString = 
                 String(hours).padStart(2, '0') + ':' + 
                 String(minutes).padStart(2, '0') + ':' + 
                 String(seconds).padStart(2, '0');
+            
+            // Logic for Paused vs Running
+            if (!state.isRunning) {
+                timerDisplay.innerText = timeString + " (PAUSED)";
+                timerDisplay.style.color = "var(--text-main)"; // Shows in your normal orange color
+            } else {
+                timerDisplay.innerText = timeString;
+                timerDisplay.style.color = "#fff"; // Bright white when actively ticking
+            }
         } catch (error) {
             // Ignore small connection blips for the clock
         }
     }
-
-
-    function goToProfile() {
-        window.location.href = '/profile' + adminQuery;
-    }
-
-    // FIRE EVERYTHING ON BOOT
-    loadTasksImmediately();
-    setInterval(updateClockLoop, 1000); 
 </script>
 </body>
 </html>

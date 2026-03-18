@@ -51,10 +51,19 @@
         <div class="card">
             <h2>GAME CLOCK</h2>
             <hr>
-            <div style="display: flex; justify-content: center; gap: 20px;">
-                <button id="start-btn" onclick="startTimer()"> Start 2-Hour Timer</button>
-                <button id="stop-btn" class="danger-btn" onclick="stopTimer()">🛑 Stop Timer</button>
+            
+            <div class="inline-text" style="margin-bottom: 25px;">
+                Set Time: 
+                <input type="number" id="timerMinutes" class="inline-input" value="120" min="1" style="width: 80px;"> 
+                minutes
+                <button onclick="setGameTime()" style="padding: 10px 15px; font-size: 14px; margin-left: 10px;">Update Time</button>
             </div>
+
+            <div style="display: flex; justify-content: center; gap: 20px;">
+                <button id="start-btn" onclick="startTimer()">▶ START / RESUME</button>
+                <button id="stop-btn" class="danger-btn" onclick="stopTimer()"> ▐▐ PAUSE TIMER</button>
+            </div>
+            
             <p id="timer-status" style="margin-top: 15px; font-weight: bold; color: var(--accent);"></p>
         </div>
 
@@ -170,6 +179,30 @@ async function submitTask(event) {
     </script>
     <script>
     // --- TIMER CONTROL ---
+
+        // --- NEW: Set Time Logic ---
+    async function setGameTime() {
+        const mins = document.getElementById('timerMinutes').value;
+        const statusText = document.getElementById('timer-status');
+        
+        try {
+            const response = await fetch('/supersecretcyber-panel/set-time?admin=jillian', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: mins })
+            });
+            
+            if (response.ok) {
+                statusText.innerText = `✔ Timer forced to ${mins} minutes!`;
+                statusText.style.color = "#4caf50";
+            } else {
+                statusText.innerText = "Error: Could not update time.";
+            }
+        } catch (error) {
+            statusText.innerText = "Critical Error: Lost connection.";
+        }
+    }
+
     async function startTimer() {
         const btn = document.getElementById('start-btn');
         const statusText = document.getElementById('timer-status');

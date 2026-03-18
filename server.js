@@ -370,9 +370,9 @@ app.get('/api/scores', (req, res) => {
 // Remote game control for time
 let gameState = {
     isRunning: false,
-    endTime: null,
-    durationSeconds: 7200, // 2 hours
-    unlockedTasks: 1 // Start with only 1 task available
+    secondsLeft: 7200, // Default to 2 hours, but updates instantly when you change it
+    lastTick: null,    // Tracks the exact millisecond you press "Start"
+    unlockedTasks: 1 
 };
 
 app.get('/supersecretcyber-panel', (req, res) => {
@@ -382,27 +382,62 @@ app.get('/supersecretcyber-panel', (req, res) => {
 
 // --- PLAYER API (How the dashboard gets the data) ---
 app.get('/api/state', (req, res) => {
-    // Calculate remaining time on the fly
-    let timeRemaining = 0;
-    if (gameState.isRunning && gameState.endTime) {
-        timeRemaining = Math.max(0, Math.floor((gameState.endTime - Date.now()) / 1000));
+    let currentRemaining = gameState.secondsLeft;
+
+    // If running, subtract the seconds that have passed since we hit Start
+    if (gameState.isRunning && gameState.lastTick) {
+        const elapsed = Math.floor((Date.now() - gameState.lastTick) / 1000);
+        currentRemaining = Math.max(0, gameState.secondsLeft - elapsed);
     }
     
     res.json({
-        timeRemaining: timeRemaining,
+        timeRemaining: currentRemaining,
         isRunning: gameState.isRunning,
         unlockedTasks: gameState.unlockedTasks
     });
 });
 
-// --- ADMIN CONTROLS (Your remote control) ---
+// --- SET TIMER ON THE FLY ---
+app.post('/supersecretcyber-panel/set-time', express.json(), (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+    
+    const newMinutes = parseInt(req.body.minutes);
+    if (!isNaN(newMinutes)) {
+        gameState.secondsLeft = newMinutes * 60; // Update the memory bank
+        
+        if (gameState.isRunning) {
+            gameState.lastTick = Date.now(); // Reset the anchor if currently ticking
+        }
+        res.json({ success: true });
+    } else {
+        res.status(400).json({ success: false });
+    }
+});
+
+// --- START / RESUME TIMER ---
 app.get('/supersecretcyber-panel/start-timer', (req, res) => {
     if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
     
-    gameState.isRunning = true;
-    // Set the end time to exactly 2 hours from THIS moment
-    gameState.endTime = Date.now() + (gameState.durationSeconds * 1000); 
-    res.send(`<h1>Timer Started! Ends at ${new Date(gameState.endTime).toLocaleTimeString()}</h1><a href="/?admin=${process.env.ADMIN_KEY}">Back to Game</a>`);
+    if (!gameState.isRunning) {
+        gameState.isRunning = true;
+        gameState.lastTick = Date.now(); // Start counting from exactly right now
+    }
+    res.send(`<h1>Timer Resumed!</h1>`);
+});
+
+// --- STOP / PAUSE TIMER ---
+app.get('/supersecretcyber-panel/stop-timer', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+    
+    if (gameState.isRunning && gameState.lastTick) {
+        // Calculate the exact time spent ticking and permanently subtract it
+        const elapsed = Math.floor((Date.now() - gameState.lastTick) / 1000);
+        gameState.secondsLeft = Math.max(0, gameState.secondsLeft - elapsed);
+        
+        gameState.isRunning = false;
+        gameState.lastTick = null;
+    }
+    res.send(`<h1>Timer Paused!</h1>`);
 });
 
 // --- NEW: Stop Timer Route ---
@@ -513,9 +548,6 @@ app.post('/api/task/delete', express.urlencoded({ extended: true }), (req, res) 
         res.redirect(`/supersecretcyber-panel/manage-tasks?admin=${process.env.ADMIN_KEY}`);
     });
 });
-
-
-
 
 app.listen(port, () => {
     console.log(`Your CTF server is running on port ${port}`);
