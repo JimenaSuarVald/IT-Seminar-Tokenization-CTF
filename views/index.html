@@ -110,7 +110,8 @@
             if (el && adminQuery) el.href += adminQuery;
         });
 
-        if (urlParams.get('admin') === 'jillian') {
+// Show Mission Control button if an admin key is present
+        if (urlParams.has('admin')) {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;
         }

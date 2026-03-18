@@ -101,7 +101,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
 
-    if (urlParams.get('admin') === 'jillian') {
+    if (urlParams.get('admin')) {
         document.getElementById('adminPanel').style.display = 'block';
     }
 
@@ -148,7 +148,7 @@
         });
 
         // Show Mission Control button ONLY if they have the admin key in the URL
-        if (urlParams.get('admin') === 'jillian') {
+        if (urlParams.get('admin')) {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;
         }

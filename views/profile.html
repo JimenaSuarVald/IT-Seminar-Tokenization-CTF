@@ -135,7 +135,7 @@
         });
 
         // Show Mission Control button ONLY if they have the admin key in the URL
-        if (urlParams.get('admin') === 'jillian') {
+        if (urlParams.get('admin')) {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;
         }

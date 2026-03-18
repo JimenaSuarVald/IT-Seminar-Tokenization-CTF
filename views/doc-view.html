@@ -91,7 +91,7 @@
     // Auto-attach admin keys to all sidebar links when the page loads
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
+        const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.has('admin')}` : '';
         
         const links = ['sb-home', 'sb-docs', 'sb-lead', 'sb-cred', 'sb-logout'];
         links.forEach(id => {
@@ -99,7 +99,7 @@
             if (el && adminQuery) el.href += adminQuery;
         });
 
-        if (urlParams.get('admin') === 'jillian') {
+        if (urlParams.get('admin')) {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;
         }
@@ -111,7 +111,7 @@
     
     document.getElementById('backLink').href = '/documentation' + adminQuery;
 
-    if (urlParams.get('admin') === 'jillian') {
+    if (urlParams.has('admin')) {
         document.getElementById('editBtn').style.display = 'block';
     }
 

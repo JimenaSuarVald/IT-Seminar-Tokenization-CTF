@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+
+const bcrypt = require('bcrypt');
 const express = require('express');
 const app = express();
 const path = require('path');
@@ -40,7 +42,18 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage: storage });
+// Tell multer to explicitly check the file type
+const upload = multer({ 
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        // Only accept files that declare themselves as images
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('SECURITY BLOCK: Only image files are allowed.'));
+        }
+    }
+});
 
 
 // Looks for Cloudflare's connecting IP, otherwise falls back to standard IP
@@ -203,16 +216,26 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     
-    const sql = `SELECT * FROM players WHERE username = ? AND password = ?`;
-    db.get(sql, [username, password], (err, user) => {
+    // 1. Only look up the username
+    const sql = `SELECT * FROM players WHERE username = ?`;
+    
+    db.get(sql, [username], async (err, user) => {
         if (err) {
             console.error(err);
             return res.status(500).send("Server error");
         }
+        
         if (user) {
-            req.session.userId = user.id;
-            req.session.username = user.username;
-            res.redirect(`/`); 
+            // 2. Safely compare the plain text password to the scrambled DB password
+            const match = await bcrypt.compare(password, user.password);
+            
+            if (match) {
+                req.session.userId = user.id;
+                req.session.username = user.username;
+                res.redirect(`/`); 
+            } else {
+                res.send(`<h1 style="color:red; text-align:center;">Invalid username or password!</h1>`);
+            }
         } else {
             res.send(`<h1 style="color:red; text-align:center;">Invalid username or password!</h1>`);
         }
@@ -434,16 +457,31 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'registration.html'));
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
     const { username, password } = req.body; 
-    const sql = `INSERT INTO players (username, password) VALUES (?, ?)`;
     
-    db.run(sql, [username, password], function(err) {
-        if (err) {
-            return res.send(`<h1 style="color:red; text-align:center;">Username taken! Hit back.</h1>`);
-        }
-        res.redirect(`/login`); 
-    });
+
+    const validUsernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!validUsernameRegex.test(username)) {
+        return res.send(`<h1 style="color:red; text-align:center;">Security Alert: Invalid characters in username!</h1>`);
+    }
+
+    try {
+        // Scramble the password using bcrypt (10 "salt rounds" is standard security)
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Save the HASHED password to the database, not the plain text one!
+        const sql = `INSERT INTO players (username, password) VALUES (?, ?)`;
+        db.run(sql, [username, hashedPassword], function(err) {
+            if (err) {
+                return res.send(`<h1 style="color:red; text-align:center;">Username taken! Hit back.</h1>`);
+            }
+            res.redirect(`/login`); 
+        });
+    } catch (err) {
+        console.error("Encryption Error:", err);
+        res.status(500).send("Error securing password.");
+    }
 });
 
 

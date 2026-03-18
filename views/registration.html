@@ -60,15 +60,16 @@
             For the sake of the contest please use your real name
         </p>
         
-        <form action="/register?admin=jillian" method="POST">
-            <input type="text" name="username" placeholder="Choose Username" required><br>
-            <input type="password" name="password" placeholder="Choose Password" required><br>
-            <button type="submit">JOIN THE GRID</button>
+        <form action="/login" method="POST">
+            <input type="text" name="username" placeholder="Enter Username" required><br>
+            <input type="password" name="password" placeholder="Enter Password" required><br>
+            <button type="submit">ACCESS GRID</button>
         </form>
 
         <div class="links">
-            <p>Already registered? <a href="/login?admin=jillian">Login here</a></p>
-            <a href="/leaderboard?admin=jillian">VIEW GLOBAL RANKINGS</a>
+            <p>Not registered? <a href="/register">Register here</a></p>
+            <br>
+            <a href="/leaderboard">VIEW GLOBAL RANKINGS</a>
         </div>
     </div>
 
