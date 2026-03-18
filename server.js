@@ -440,14 +440,6 @@ app.get('/supersecretcyber-panel/stop-timer', (req, res) => {
     res.send(`<h1>Timer Paused!</h1>`);
 });
 
-// --- NEW: Stop Timer Route ---
-app.get('/supersecretcyber-panel/stop-timer', (req, res) => {
-    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
-    
-    gameState.isRunning = false;
-    res.send(`<h1>Timer Stopped!</h1>`);
-});
-
 app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req, res) => {
 
     // 1. Get the key from the Form OR the URL (just in case)

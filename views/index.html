@@ -103,6 +103,10 @@
     const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
+    function goToProfile() { 
+        window.location.href = '/profile' + adminQuery; 
+    }
+    
     // --- BRUTE FORCE TASK FETCH ---
     // This runs exactly ONE TIME when the page loads. No complex checks.
         async function loadTasksImmediately() {

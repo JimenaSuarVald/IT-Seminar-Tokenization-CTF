@@ -91,12 +91,11 @@
             });
         });
 
-        async function loadTaskData() {
+async function loadTaskData() {
             try {
                 const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}?admin=${adminKey}`);
                 if (!response.ok) return alert("Failed to load task data.");
                 
-                // Fetch the data FIRST
                 const task = await response.json();
                 
                 document.getElementById('editName').value = task.name;
@@ -105,13 +104,18 @@
                 document.getElementById('editPoints').value = task.points || 100;
                 document.getElementById('editFlag').value = task.flag || "";
 
-                // THEN populate the rich text editor
+                // --- NEW: Safely load and preview the existing image! ---
+                if (task.image_url) {
+                    document.getElementById('currentImageUrl').value = task.image_url;
+                    document.getElementById('currentIconPreview').src = task.image_url;
+                    document.getElementById('imagePreviewContainer').style.display = 'block';
+                }
+
                 if (task.content) {
                     window.quill.root.innerHTML = task.content;
                 }
             } catch (err) { console.error(err); }
         }
-
 async function saveEdits() {
     const status = document.getElementById('saveStatus');
     const fileInput = document.getElementById('editImageFile');
