@@ -150,7 +150,8 @@ function requireLogin(req, res, next) {
 }
 
 // Tasks / Main menu
-app.get('/', (req, res) => {
+// CRITICAL FIX: Added requireLogin to stop unauthenticated users from seeing the dashboard
+app.get('/', requireLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
@@ -200,17 +201,12 @@ app.get('/api/task/:name', requireLogin, (req, res) => {
     });
 });
 
-// 4. API: Admin route to edit an existing task inline
-// Notice express.json() - this is required to read the JSON data sent by the fetch request
-// 4. API: Admin route to edit an existing task inline
-app.post('/api/task/:name/edit', express.json(), (req, res) => {
+app.post('/api/task/:name/edit', express.json({ limit: '50mb' }), (req, res) => {
     const oldTaskName = req.params.name;
-    // Add 'content' to the destructured body
     const { adminKey, name, description, content, estimated_time, points, flag } = req.body;
 
     if (adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
 
-    // Add 'content = ?' to the SQL string and the array
     const sql = `UPDATE tasks SET name = ?, description = ?, content = ?, estimated_time = ?, points = ?, flag = ? WHERE name = ?`;
     db.run(sql, [name, description, content, estimated_time, points, flag, oldTaskName], function(err) {
         if (err) return res.status(500).send(err.message);
