@@ -95,47 +95,75 @@
     </div>
 
 <script>
-
-    
-
     const urlParams = new URLSearchParams(window.location.search);
     const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
-// --- UNIVERSAL SIDEBAR LOGIC ---
+
+    // --- UNIVERSAL SIDEBAR LOGIC ---
     function toggleSidebar() { 
         document.getElementById('sidebar').classList.toggle('collapsed'); 
     }
     
-    // Auto-attach admin keys to all sidebar links when the page loads
     window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
-        
         const links = ['sb-home', 'sb-docs', 'sb-lead', 'sb-cred', 'sb-logout'];
         links.forEach(id => {
             const el = document.getElementById(id);
             if (el && adminQuery) el.href += adminQuery;
         });
 
-        // Show Mission Control button ONLY if they have the admin key in the URL
         if (urlParams.get('admin') === 'jillian') {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;
         }
     });
+
     function goToProfile() { 
         window.location.href = '/profile' + adminQuery; 
     }
 
-        const stateRes = await fetch('/api/state' + adminQuery);
+    // --- BRUTE FORCE TASK FETCH ---
+    async function loadTasksImmediately() {
+        try {
+            const tasksRes = await fetch('/api/tasks' + adminQuery);
+            const tasks = await tasksRes.json();
+            
+            const stateRes = await fetch('/api/state' + adminQuery);
             const state = await stateRes.json();
             
-            // FIX: Explicitly check for undefined so 0 is accepted as a real number!
+            // FIX: Explicitly check for undefined so 0 is safely accepted!
             const unlockedLimit = state.unlockedTasks !== undefined ? state.unlockedTasks : 1;
-    
+
+            const tasksGrid = document.getElementById('tasks-grid');
+            tasksGrid.innerHTML = ''; 
+
+            if (tasks.length === 0) {
+                tasksGrid.innerHTML = '<h2 style="grid-column: 1/-1; text-align: center; color: red;">No Tasks Found!</h2>';
+                return;
+            }
+
+            tasks.forEach((task, index) => {
+                const isLocked = index >= unlockedLimit;
+                const card = document.createElement('div');
+                card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
+                
+                card.innerHTML = `
+                    <a href="/game/task/${encodeURIComponent(task.name)}${adminQuery}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
+                        <img src="${task.image_url || 'https://via.placeholder.com/400x220/1a102a/e066a3?text=NO+IMAGE+DATA'}" class="task-image" alt="Task Image" onerror="this.src='https://via.placeholder.com/400x220/1a102a/e066a3?text=IMAGE+ERROR'">
+                        <div class="task-info">
+                            <h3>${task.name}</h3>
+                            <p>${task.description}</p>
+                            <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
+                        </div>
+                    </a>
+                `;
+                tasksGrid.appendChild(card);
+            });
+        } catch (error) {
+            console.error("Critical failure loading tasks:", error);
+            document.getElementById('loading-msg').innerText = "Failed to load database. Check Console (F12).";
+        }
+    }
 
     // --- SEPARATE TIMER LOOP ---
-    // This only updates the clock. It doesn't touch the tasks anymore.
-       // --- SEPARATE TIMER LOOP ---
     async function updateClockLoop() {
         try {
             const stateRes = await fetch('/api/state' + adminQuery, { cache: 'no-store' });
@@ -148,7 +176,6 @@
                 return;
             }
             
-            // Format the raw seconds into HH:MM:SS
             const hours = Math.floor(state.timeRemaining / 3600);
             const minutes = Math.floor((state.timeRemaining % 3600) / 60);
             const seconds = state.timeRemaining % 60;
@@ -158,26 +185,23 @@
                 String(minutes).padStart(2, '0') + ':' + 
                 String(seconds).padStart(2, '0');
             
-            // Logic for Paused vs Running
             if (!state.isRunning) {
                 timerDisplay.innerText = timeString + " (PAUSED)";
-                timerDisplay.style.color = "var(--text-main)"; // Shows in your normal orange color
+                timerDisplay.style.color = "var(--text-main)"; 
             } else {
                 timerDisplay.innerText = timeString;
-                timerDisplay.style.color = "#fff"; // Bright white when actively ticking
+                timerDisplay.style.color = "#fff"; 
             }
-        } catch (error) {
-            // Ignore small connection blips for the clock
-        }
+        } catch (error) {}
     }
 
     // --- START THE ENGINES ---
-    // This tells the browser to actually run your functions when the page loads!
     window.onload = () => {
-        loadTasksImmediately(); // Draw the tasks
-        updateClockLoop();      // Fetch the clock immediately
-        setInterval(updateClockLoop, 1000); // Keep ticking every 1 second
+        loadTasksImmediately(); 
+        updateClockLoop();      
+        setInterval(updateClockLoop, 1000); 
     };
+
 </script>
 </body>
 </html>
