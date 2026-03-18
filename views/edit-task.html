@@ -23,9 +23,22 @@
         <h2 style="color: red; margin-top: 0;">🔧 TASK EDITOR</h2>
         <p>HTML tags like <code>&lt;a href="/link"&gt;Text&lt;/a&gt;</code> are supported in the description.</p>
         
-        <label>Main Menu Image (Icon):</label>
-        <input type="file" id="editImageFile" accept="image/*">
-        <input type="hidden" id="currentImageUrl">
+        <div class="card" style="border-color: var(--accent); border-style: solid; border-width: 1px; margin-bottom: 30px;">
+            <h3 style="margin-top: 0; color: var(--accent);">🖼️ MENU ICON</h3>
+            <p style="font-size: 0.9em; color: #ccc;">This image appears only on the main dashboard grid.</p>
+            
+            <label>Upload New Icon:</label>
+            <input type="file" id="editImageFile" accept="image/*">
+            
+            <input type="hidden" id="currentImageUrl">
+            
+            <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
+                <p style="font-size: 0.8em;">Current Icon:</p>
+                <img id="currentIconPreview" src="" style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; border: 1px solid var(--accent);">
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px dashed rgba(224, 102, 163, 0.5); margin: 30px 0;">
 
         <label>Task Name:</label>
         <input type="text" id="editName">
