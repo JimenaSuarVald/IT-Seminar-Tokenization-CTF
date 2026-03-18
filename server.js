@@ -249,7 +249,7 @@ app.get('/game/task/:name', requireLogin, (req, res) => {
     if (gameState.unlockedTasks === 0 && req.query.admin !== process.env.ADMIN_KEY) {
         return res.status(403).send(`
             <body style='background:#1a102a; color:#d32f2f; font-family:monospace; text-align:center; padding-top:50px;'>
-                <h1>⛔ SYSTEM LOCKED</h1>
+                <h1>⦸ SYSTEM LOCKED ⦸</h1>
                 <p>Tasks are currently disabled by the Admin.</p>
                 <a href='/' style='color:#ffb74d;'>Return to Dashboard</a>
             </body>
@@ -359,13 +359,13 @@ app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
 
     // If the game is paused or out of time, reject the submission immediately
     if (!gameState.isRunning || currentRemaining <= 0) {
-        return res.json({ success: false, message: "⛔ SUBMISSIONS LOCKED: The game clock is paused or time is up!" });
+        return res.json({ success: false, message: "⦸ SUBMISSIONS LOCKED: The game clock is paused or time is up!" });
     }
     // ----------------------------------
 
     // If the game is paused, out of time, or tasks are locked, reject the submission immediately
     if (!gameState.isRunning || currentRemaining <= 0 || gameState.unlockedTasks === 0) {
-        return res.json({ success: false, message: "⛔ SUBMISSIONS LOCKED: The game is paused or tasks are locked!" });
+        return res.json({ success: false, message: "⦸ SUBMISSIONS LOCKED: The game is paused or tasks are locked!" });
     }
 
     const taskName = req.params.name;
@@ -376,7 +376,7 @@ app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
         if (err || !task) return res.status(404).json({ error: "Task not found." });
 
         if (task.flag !== submittedFlag) {
-            return res.json({ success: false, message: "❌ Incorrect flag. Try again!" });
+            return res.json({ success: false, message: "✘ Incorrect flag. Try again!" });
         }
 
         db.get("SELECT score, found_flags FROM players WHERE id = ?", [userId], (err, player) => {
@@ -384,7 +384,7 @@ app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
 
             const solvedTasks = player.found_flags ? player.found_flags.split(',') : [];
             if (solvedTasks.includes(task.id.toString())) {
-                return res.json({ success: true, message: "⚠️ Flag correct, but you already claimed these points!" });
+                return res.json({ success: true, message: "⚠ Flag correct, but you already claimed these points!" });
             }
 
             // --- POINT DECAY MATH ---
@@ -393,10 +393,19 @@ app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
                 const startTime = timer ? timer.started_at : Date.now();
                 const minutesTaken = Math.floor((Date.now() - startTime) / 60000);
                 
-                const pointsLostPerMinute = 2; // Lose 2 points every minute
+                // --- NEW PERCENTAGE-BASED SCORING ---
+                const originalPoints = task.points;
+                const lossPerMinute = originalPoints * 0.01; // Lose 1% of the total value per minute
+                const maxLossAllowed = originalPoints * 0.30; // Maximum they can lose is 30%
                 
-                let earnedPoints = task.points - (minutesTaken * pointsLostPerMinute);
-                earnedPoints = Math.max(10, earnedPoints); // Hard floor at 10 points
+                // Calculate the total loss, but cap it if it exceeds the 30% maximum
+                let totalLoss = minutesTaken * lossPerMinute;
+                if (totalLoss > maxLossAllowed) {
+                    totalLoss = maxLossAllowed; 
+                }
+                
+                // Round the final score so you don't end up with decimals (like 97.5 points)
+                const earnedPoints = Math.round(originalPoints - totalLoss);
 
                 // Save the new score
                 solvedTasks.push(task.id);
@@ -411,7 +420,7 @@ app.post('/api/task/:name/submit', requireLogin, express.json(), (req, res) => {
 
                     res.json({ 
                         success: true, 
-                        message: `🎉 Flag Correct! You finished in ${minutesTaken} minutes and earned ${earnedPoints} points.` 
+                        message: `✔ Flag Correct! You finished in ${minutesTaken} minutes and earned ${earnedPoints} points.` 
                     });
                 
                 });
@@ -602,7 +611,7 @@ app.get('/supersecretcyber-panel/manage-players', (req, res) => {
 
         let html = `
         <body style="background:#1a102a; color:#ffb74d; font-family:monospace; padding: 40px; text-align: center;">
-            <h1 style="color: #ffb74d; text-shadow: 0 0 10px #ffb74d;">👥 PLAYER MANAGER</h1>
+            <h1 style="color: #ffb74d; text-shadow: 0 0 10px #ffb74d;">➤ PLAYER MANAGER</h1>
             <a href="/supersecretcyber-panel?admin=${process.env.ADMIN_KEY}" style="color: #e066a3; text-decoration: none; border: 1px solid #e066a3; padding: 10px; border-radius: 5px; transition: 0.2s;">◄ Back to Mission Control</a>
             
             <table style="margin: 40px auto; border-collapse: collapse; width: 80%; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px #ffb74d;">
@@ -688,7 +697,7 @@ app.get('/supersecretcyber-panel/manage-tasks', (req, res) => {
                 <tr>
                     <td style="padding: 15px; border: 1px solid #444;">${task.id}</td>
                     <td style="padding: 15px; border: 1px solid #444;">
-                        <a href="/game/task/${encodeURIComponent(task.name)}?admin=${process.env.ADMIN_KEY}" style="color:#ffb74d; font-weight:bold; text-decoration:none;">${task.name} 📝</a>
+                        <a href="/game/task/${encodeURIComponent(task.name)}?admin=${process.env.ADMIN_KEY}" style="color:#ffb74d; font-weight:bold; text-decoration:none;">${task.name} 🗎</a>
                     </td>
                     <td style="padding: 15px; border: 1px solid #444;">${task.points}</td>
                     <td style="padding: 15px; border: 1px solid #444; color: #4caf50;">${task.flag || "<em>Not set</em>"}</td>
