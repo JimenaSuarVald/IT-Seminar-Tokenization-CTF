@@ -78,6 +78,30 @@
         const adminKey = urlParams.get('admin');
 
         async function loadTask() {
+
+        const adminQuery = adminKey ? `?admin=${adminKey}` : '';
+                
+                // --- NEW: Check if the master game clock is running ---
+                const stateRes = await fetch('/api/state' + adminQuery);
+                const gameState = await stateRes.json();
+
+                // If paused or time is up, visually lock the submission box
+                if (!gameState.isRunning || gameState.timeRemaining <= 0) {
+                    const flagBox = document.getElementById('flagInput');
+                    const submitBtn = document.querySelector('button[onclick="submitFlag()"]');
+                    
+                    if (flagBox && submitBtn) {
+                        flagBox.disabled = true;
+                        flagBox.placeholder = " SYSTEM LOCKED (CLOCK STOPPED)";
+                        flagBox.style.borderColor = "#d32f2f";
+                        
+                        submitBtn.disabled = true;
+                        submitBtn.innerText = "LOCKED";
+                        submitBtn.style.backgroundColor = "#555";
+                        submitBtn.style.cursor = "not-allowed";
+                        submitBtn.style.boxShadow = "none";
+                    }
+                }
             try {
                 const adminQuery = adminKey ? `?admin=${adminKey}` : '';
                 const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}${adminQuery}`);
