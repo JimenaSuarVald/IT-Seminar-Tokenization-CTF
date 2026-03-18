@@ -201,7 +201,7 @@ app.get('/api/task/:name', requireLogin, (req, res) => {
     });
 });
 
-app.post('/api/task/:name/edit', express.json({ limit: '50mb' }), (req, res) => {
+app.post('/api/task/:name/edit', express.json({ limit: '200mb' }), (req, res) => {
     const oldTaskName = req.params.name;
     const { adminKey, name, description, content, estimated_time, points, flag } = req.body;
 

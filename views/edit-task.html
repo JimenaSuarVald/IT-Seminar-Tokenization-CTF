@@ -100,10 +100,10 @@
                 adminKey: adminKey,
                 name: document.getElementById('editName').value,
                 description: document.getElementById('editDesc').value,
-                content: window.quill.root.innerHTML, // <-- Moved this inside the object!
                 estimated_time: document.getElementById('editTime').value,
                 points: document.getElementById('editPoints').value,
-                flag: document.getElementById('editFlag').value
+                flag: document.getElementById('editFlag').value,
+                content: window.quill.root.innerHTML // <--- MOVED THIS INSIDE!
             };
 
             const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}/edit`, {
