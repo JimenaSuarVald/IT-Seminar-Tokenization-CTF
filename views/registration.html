@@ -55,7 +55,10 @@
 <body>
 
     <div class="form-container">
-        <h2> → REGISTER ENTITY </h2>
+        <h2> → REGISTER </h2>
+        <p style="color: rgba(255, 183, 77, 0.5); font-size: 0.85em; margin-top: 0; margin-bottom: 25px; font-style: italic;">
+            For the sake of the contest please use your real name
+        </p>
         
         <form action="/register?admin=jillian" method="POST">
             <input type="text" name="username" placeholder="Choose Username" required><br>
@@ -64,7 +67,7 @@
         </form>
 
         <div class="links">
-            <p>Already an registered? <a href="/login?admin=jillian">Login here</a></p>
+            <p>Already registered? <a href="/login?admin=jillian">Login here</a></p>
             <a href="/leaderboard?admin=jillian">VIEW GLOBAL RANKINGS</a>
         </div>
     </div>

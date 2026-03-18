@@ -77,16 +77,16 @@
 
     <nav class="sidebar collapsed" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="/" id="sb-home">🏠 Main Menu</a></li>
-            <li><a href="/documentation" id="sb-docs">📄 Documentation</a></li>
-            <li><a href="/leaderboard" id="sb-lead">🏆 Leaderboards</a></li>
-            <li><a href="/credits" id="sb-cred">👨‍💻 System Architects</a></li>
+            <li><a href="/" id="sb-home">🏠︎ Main Menu</a></li>
+            <li><a href="/documentation" id="sb-docs"> 🕮 Documentation</a></li>
+            <li><a href="/leaderboard" id="sb-lead">🎖 Leaderboards</a></li>
+            <li><a href="/credits" id="sb-cred">⏻ System Architects</a></li>
             
-            <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙️ Mission Control</a></li>
+            <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙︎ Mission Control</a></li>
         </ul>
         
         <div class="sign-out-container">
-            <a href="/login" id="sb-logout">🚪 Sign Out</a>
+            <a href="/login" id="sb-logout">➜] Sign Out</a>
         </div>
     </nav>
 
@@ -103,8 +103,8 @@
         <div id="editor-container"></div>
 
         <div style="margin-top: 20px; display: flex; align-items: center;">
-            <button onclick="saveDoc()">💾 Save Document</button>
-            <button onclick="deleteDoc()" class="danger" id="deleteBtn">🗑️ Delete</button>
+            <button onclick="saveDoc()">🗁 Save Document</button>
+            <button onclick="deleteDoc()" class="danger" id="deleteBtn">🗑 Delete</button>
             <span id="status" style="margin-left: 15px; color: #4caf50;"></span>
         </div>
     </div>
@@ -178,7 +178,7 @@
             status.innerText = "✔ Saved!";
             setTimeout(() => window.location.href = `/documentation/read/${data.newId}${adminQuery}`, 1000);
         } else {
-            status.innerText = "❌ Error saving.";
+            status.innerText = "✖ Error saving.";
         }
     }
 

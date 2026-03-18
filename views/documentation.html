@@ -55,16 +55,16 @@
 
     <nav class="sidebar collapsed" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="/" id="sb-home">🏠 Main Menu</a></li>
-            <li><a href="/documentation" id="sb-docs">📄 Documentation</a></li>
-            <li><a href="/leaderboard" id="sb-lead">🏆 Leaderboards</a></li>
-            <li><a href="/credits" id="sb-cred">👨‍💻 System Architects</a></li>
+            <li><a href="/" id="sb-home">🏠︎ Main Menu</a></li>
+            <li><a href="/documentation" id="sb-docs"> 🕮 Documentation</a></li>
+            <li><a href="/leaderboard" id="sb-lead">🎖 Leaderboards</a></li>
+            <li><a href="/credits" id="sb-cred">⏻ System Architects</a></li>
             
-            <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙️ Mission Control</a></li>
+            <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙︎ Mission Control</a></li>
         </ul>
         
         <div class="sign-out-container">
-            <a href="/login" id="sb-logout">🚪 Sign Out</a>
+            <a href="/login" id="sb-logout">➜] Sign Out</a>
         </div>
     </nav>
 
@@ -88,7 +88,7 @@
             <h1>SYSTEM ARCHIVES</h1>
             
             <div class="admin-controls" id="adminPanel">
-                <button onclick="createNewDoc()">➕ Create New Entry</button>
+                <button onclick="createNewDoc()">➤ Create New Entry</button>
             </div>
 
             <div class="doc-list" id="docList">
@@ -100,10 +100,6 @@
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
-    
-    document.getElementById('home-link').href = '/' + adminQuery;
-    document.getElementById('lead-link').href = '/leaderboard' + adminQuery;
-    document.getElementById('cred-link').href = '/credits' + adminQuery;
 
     if (urlParams.get('admin') === 'jillian') {
         document.getElementById('adminPanel').style.display = 'block';
