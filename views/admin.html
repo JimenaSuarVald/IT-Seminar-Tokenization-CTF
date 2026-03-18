@@ -48,13 +48,17 @@
 <body>
 
     <div class="container">
-        <h1>MISSION CONTROL</h1>
         <div class="card">
             <h2>GAME CLOCK</h2>
             <hr>
-            <button id="start-btn" onclick="startTimer()"> Start 2-Hour Timer</button>
+            <div style="display: flex; justify-content: center; gap: 20px;">
+                <button id="start-btn" onclick="startTimer()"> Start 2-Hour Timer</button>
+                <button id="stop-btn" class="danger-btn" onclick="stopTimer()">🛑 Stop Timer</button>
+            </div>
             <p id="timer-status" style="margin-top: 15px; font-weight: bold; color: var(--accent);"></p>
         </div>
+
+
 
         <div class="card">
             <h2>TASK UNLOCKER</h2>
@@ -189,6 +193,46 @@ async function submitTask(event) {
         } catch (error) {
             statusText.innerText = "Critical Error: Lost connection to Raspberry Pi.";
             btn.disabled = false;
+        }
+    }
+
+    // --- NEW: Stop Timer Logic ---
+    async function stopTimer() {
+        const stopBtn = document.getElementById('stop-btn');
+        const startBtn = document.getElementById('start-btn');
+        const statusText = document.getElementById('timer-status');
+    
+        stopBtn.innerText = "Halting...";
+        stopBtn.disabled = true; 
+
+        try {
+            const response = await fetch('/supersecretcyber-panel/stop-timer?admin=jillian');
+            
+            if (response.ok) {
+                stopBtn.innerText = "🛑 TIMER STOPPED";
+                
+                // Reset the Start button visually so you can use it again later
+                startBtn.innerText = "Start 2-Hour Timer";
+                startBtn.style.backgroundColor = "var(--accent)";
+                startBtn.style.boxShadow = "0 0 15px var(--accent)";
+                startBtn.disabled = false;
+
+                statusText.innerText = "Server clock halted! Player dashboards will now show 'WAITING FOR ADMIN'.";
+                statusText.style.color = "#d32f2f"; // Turn text red to indicate it is stopped
+                
+                // Reset Stop button state after a few seconds
+                setTimeout(() => {
+                    stopBtn.innerText = "🛑 Stop Timer";
+                    stopBtn.disabled = false;
+                }, 3000);
+            } else {
+                statusText.innerText = "Error: Access Denied.";
+                stopBtn.innerText = "🛑 Stop Timer";
+                stopBtn.disabled = false;
+            }
+        } catch (error) {
+            statusText.innerText = "Critical Error: Lost connection.";
+            stopBtn.disabled = false;
         }
     }
 

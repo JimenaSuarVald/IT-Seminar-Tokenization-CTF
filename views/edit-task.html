@@ -23,6 +23,10 @@
         <h2 style="color: red; margin-top: 0;">🔧 TASK EDITOR</h2>
         <p>HTML tags like <code>&lt;a href="/link"&gt;Text&lt;/a&gt;</code> are supported in the description.</p>
         
+        <label>Main Menu Image (Icon):</label>
+        <input type="file" id="editImageFile" accept="image/*">
+        <input type="hidden" id="currentImageUrl">
+
         <label>Task Name:</label>
         <input type="text" id="editName">
         
@@ -95,34 +99,47 @@
             } catch (err) { console.error(err); }
         }
 
-        async function saveEdits() {
-            const updatedData = {
-                adminKey: adminKey,
-                name: document.getElementById('editName').value,
-                description: document.getElementById('editDesc').value,
-                estimated_time: document.getElementById('editTime').value,
-                points: document.getElementById('editPoints').value,
-                flag: document.getElementById('editFlag').value,
-                content: window.quill.root.innerHTML // <--- MOVED THIS INSIDE!
-            };
+async function saveEdits() {
+    const status = document.getElementById('saveStatus');
+    const fileInput = document.getElementById('editImageFile');
+    
+    // Use FormData to handle the file upload
+    const formData = new FormData();
+    formData.append('adminKey', adminKey);
+    formData.append('name', document.getElementById('editName').value);
+    formData.append('description', document.getElementById('editDesc').value);
+    formData.append('content', window.quill.root.innerHTML);
+    formData.append('estimated_time', document.getElementById('editTime').value);
+    formData.append('points', document.getElementById('editPoints').value);
+    formData.append('flag', document.getElementById('editFlag').value);
+    
+    // Send the new file if selected, otherwise send the old URL
+    if (fileInput.files[0]) {
+        formData.append('taskImage', fileInput.files[0]);
+    } else {
+        formData.append('existingImageUrl', document.getElementById('currentImageUrl').value);
+    }
 
-            const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}/edit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedData)
-            });
+    try {
+        const response = await fetch(`/api/task/${encodeURIComponent(taskIdentifier)}/edit`, {
+            method: 'POST',
+            body: formData // No headers needed, browser sets Multipart/Form-Data
+        });
 
-            if (response.ok) {
-                const data = await response.json();
-                document.getElementById('saveStatus').innerText = "✔ Saved! Redirecting...";
-                setTimeout(() => {
-                    window.location.href = `/game/task/${encodeURIComponent(data.newName)}?admin=${adminKey}`;
-                }, 1000);
-            } else {
-                document.getElementById('saveStatus').innerText = "❌ Error saving.";
-                document.getElementById('saveStatus').style.color = "red";
-            }
+        if (response.ok) {
+            const data = await response.json();
+            status.innerText = "✔ Saved! Redirecting...";
+            setTimeout(() => {
+                window.location.href = `/game/task/${encodeURIComponent(data.newName)}?admin=${adminKey}`;
+            }, 1000);
+        } else {
+            status.innerText = "❌ Error saving.";
         }
+    } catch (err) {
+        console.error(err);
+        status.innerText = "❌ Connection Error.";
+    }
+}
 
         window.onload = loadTaskData;
     </script>

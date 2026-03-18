@@ -240,17 +240,20 @@ app.get('/api/task/:name', requireLogin, (req, res) => {
         }
     });
 });
-
-app.post('/api/task/:name/edit', express.json({ limit: '200mb' }), (req, res) => {
+// Add upload.single to handle the optional image change
+app.post('/api/task/:name/edit', upload.single('taskImage'), (req, res) => {
     const oldTaskName = req.params.name;
-    const { adminKey, name, description, content, estimated_time, points, flag } = req.body;
+    const { adminKey, name, description, content, estimated_time, points, flag, existingImageUrl } = req.body;
 
     if (adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
 
-    const sql = `UPDATE tasks SET name = ?, description = ?, content = ?, estimated_time = ?, points = ?, flag = ? WHERE name = ?`;
-    db.run(sql, [name, description, content, estimated_time, points, flag, oldTaskName], function(err) {
+    // Determine which image URL to use
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : existingImageUrl;
+
+    const sql = `UPDATE tasks SET name = ?, description = ?, content = ?, estimated_time = ?, points = ?, flag = ?, image_url = ? WHERE name = ?`;
+    
+    db.run(sql, [name, description, content, estimated_time, points, flag, imageUrl, oldTaskName], function(err) {
         if (err) return res.status(500).send(err.message);
-        
         res.status(200).json({ newName: name });
     });
 });
@@ -394,6 +397,14 @@ app.get('/supersecretcyber-panel/start-timer', (req, res) => {
     // Set the end time to exactly 2 hours from THIS moment
     gameState.endTime = Date.now() + (gameState.durationSeconds * 1000); 
     res.send(`<h1>Timer Started! Ends at ${new Date(gameState.endTime).toLocaleTimeString()}</h1><a href="/?admin=${process.env.ADMIN_KEY}">Back to Game</a>`);
+});
+
+// --- NEW: Stop Timer Route ---
+app.get('/supersecretcyber-panel/stop-timer', (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Access Denied.");
+    
+    gameState.isRunning = false;
+    res.send(`<h1>Timer Stopped!</h1>`);
 });
 
 app.post('/supersecretcyber-panel/upload-task', upload.single('taskImage'), (req, res) => {
