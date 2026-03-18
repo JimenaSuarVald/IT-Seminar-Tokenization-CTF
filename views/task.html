@@ -229,15 +229,23 @@
                     const minimumPoints = 10; 
 
                     // Function to update UI (Clock and Points)
-                    const updateUI = (seconds) => {
-                        const mins = Math.floor(seconds / 60);
-                        const secs = seconds % 60;
-                        document.getElementById('timeElapsed').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-                        
-                        let currentPoints = originalPoints - (mins * pointsLostPerMinute);
-                        currentPoints = Math.max(minimumPoints, currentPoints);
-                        document.getElementById('taskPoints').innerText = currentPoints;
-                    };
+// --- Updated Point Decay Logic in task.html ---
+const updateUI = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    document.getElementById('timeElapsed').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    
+    // NEW: Calculate 1% loss per minute to match server.js
+    const originalPoints = task.points || 100;
+    const lossPerMinute = originalPoints * 0.01; 
+    const maxLoss = originalPoints * 0.30; // 30% cap to match server
+    
+    let totalLoss = mins * lossPerMinute;
+    if (totalLoss > maxLoss) totalLoss = maxLoss;
+
+    const currentPoints = Math.round(originalPoints - totalLoss);
+    document.getElementById('taskPoints').innerText = currentPoints;
+};
 
                     // Show the initial time sent by server
                     updateUI(elapsedSeconds);
