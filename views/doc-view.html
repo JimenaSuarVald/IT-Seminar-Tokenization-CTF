@@ -6,7 +6,6 @@
     <style>
         :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; }
         body { margin: 0; font-family: 'Courier New', monospace; background-color: var(--bg-dark); color: white; display: flex; flex-direction: column; height: 100vh; }
-        .topbar { height: 60px; background: var(--panel-bg); display: flex; align-items: center; padding: 0 20px; border-bottom: 2px solid var(--accent); }
         .back-btn { color: var(--text-main); text-decoration: none; font-weight: bold; font-size: 1.2em; transition: 0.2s; }
         .back-btn:hover { color: var(--accent); }
         
@@ -19,13 +18,16 @@
         
         #editBtn { display: none; background: #d32f2f; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-family: inherit; margin-left: auto; font-weight: bold;}
         /* --- UNIVERSAL FLOATING SIDEBAR --- */
-        .menu-toggle {
-            position: fixed; top: 15px; left: 15px; z-index: 1001;
-            background: var(--bg-dark, #1a102a); border: 2px solid var(--accent, #e066a3); 
-            color: var(--accent, #e066a3); font-size: 1.5em; cursor: pointer; 
-            border-radius: 5px; padding: 5px 12px; transition: 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-        .menu-toggle:hover { background-color: var(--accent, #e066a3); color: white; box-shadow: 0 0 15px var(--accent, #e066a3); }
+
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; width: 100%; position: relative; overflow-y: auto;}
+        
+        .topbar { position: relative; height: 70px; background: var(--panel-bg); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
+        
+        .topbar-left { display: flex; align-items: center; gap: 20px; position: absolute; left: 20px; height: 100%; }
+        
+        .menu-toggle { background: var(--bg-dark); border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; transition: 0.2s; display: flex; align-items: center; justify-content: center; height: 45px; width: 50px; padding: 0; }
+        .menu-toggle:hover { background-color: var(--accent); color: white; box-shadow: 0 0 10px var(--accent); }
+
 
         /* The Push Animation for the whole site */
         body { transition: margin-left 0.3s ease !important; margin-left: 0; }
@@ -76,7 +78,22 @@
     </style>
 </head>
 <body>
-    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <a href="#" id="backLink" class="back-btn">◄ Back to Index</a>
+            </div>
+            <div class="topbar-right">
+                <button id="editBtn" onclick="editDoc()">⚙️ Edit Document</button>
+            </div>
+        </header>
+
+        <div class="reader-container">
+            <h1 id="docTitle">Loading...</h1>
+            <div id="docContent" class="content">Decrypting files...</div>
+        </div>
+    </div>
 
     <nav class="sidebar collapsed" id="sidebar">
         <ul class="sidebar-menu">
