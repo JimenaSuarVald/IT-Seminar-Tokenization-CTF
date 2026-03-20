@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CTF Dashboard</title>
-    <style>/* --- CORE PALETTE & TYPOGRAPHY --- */
+    <style>
+        /* --- CORE PALETTE & TYPOGRAPHY --- */
         :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; }
         body { margin: 0; font-family: 'Courier New', Courier, monospace; background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
         /* --- THE PUSHING SIDEBAR --- */
-        /* Using margin-left transition physically pushes the main content sideways! */
         .sidebar { width: 280px; background-color: var(--panel-bg); display: flex; flex-direction: column; transition: margin-left 0.3s ease; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 1000; height: 100vh; flex-shrink: 0; border-right: 2px solid var(--accent); }
         .sidebar.collapsed { margin-left: -280px; }
         
@@ -28,32 +28,41 @@
         
         .topbar { position: relative; height: 70px; background-color: var(--panel-bg); display: flex; align-items: center; justify-content: center; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); flex-shrink: 0; }
         
-        /* Menu Icon & Clock sit side-by-side cleanly at the left edge */
         .topbar-left { display: flex; align-items: center; gap: 20px; position: absolute; left: 20px; height: 100%; }
         
-        /* PERFECTLY CENTERED BUTTON (No Squishing) */
-        .menu-toggle { 
-            background: var(--bg-dark); border: 2px solid var(--accent); color: var(--accent); 
-            font-size: 1.8em; line-height: 1; cursor: pointer; border-radius: 5px; 
-            padding: 5px 12px; transition: 0.2s; display: inline-block; 
-        }
+        .menu-toggle { background: var(--bg-dark); border: 2px solid var(--accent); color: var(--accent); font-size: 1.8em; line-height: 1; cursor: pointer; border-radius: 5px; padding: 5px 12px; transition: 0.2s; display: inline-block; }
         .menu-toggle:hover { background-color: var(--accent); color: white; box-shadow: 0 0 10px var(--accent); }
         .timer { font-size: 1.5em; font-weight: bold; color: #fff; text-shadow: 0 0 8px var(--accent); }
 
-        /* Account Button aligned right */
         .topbar-right { position: absolute; right: 20px; display: flex; flex-direction: row; align-items: center; gap: 12px; cursor: pointer; transition: transform 0.2s;}
         .topbar-right:hover { transform: scale(1.05); }
         .icon-circle { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main); display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark); }
         
         /* --- TASK GRID --- */
-        .task-container { padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 30px; }        
-        .task-card { background-color: var(--panel-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 183, 77, 0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; }
+        .task-container { padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 30px; }
+        
+        /* FIX: Added display: flex directly to the card to prevent HTML nesting errors */
+        .task-card { background-color: var(--panel-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 183, 77, 0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; display: flex; flex-direction: column; cursor: pointer; }
         .task-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(224, 102, 163, 0.4); border-color: var(--accent); }
-        .task-image { width: 100%; height: 220px; background-color: #000; object-fit: cover; border-bottom: 2px solid var(--accent); }        
-.task-info { padding: 30px; text-align: center; }
-        .task-info h3 { margin: 0 0 15px 0; color: #fff; font-size: 1.3em; letter-spacing: 1px; }
-        .task-info p { margin: 0; font-size: 0.95em; color: #ccc; line-height: 1.6; }
-        .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }</style>
+        
+        .task-image { width: 100%; height: 220px; background-color: #000; object-fit: cover; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
+        
+        .task-info { padding: 20px 25px 25px 25px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; height: 100%; box-sizing: border-box; }
+        .task-info h3 { margin: 0 0 8px 0; color: #fff; font-size: 1.4em; letter-spacing: 1px; }
+        
+/* Strictly standard CSS: 1.5 line-height * 3 lines = 4.5em max height */
+        .task-info p.desc { 
+            margin: 0; 
+            font-size: 0.95em; 
+            color: #ccc; 
+            line-height: 1.5; 
+            height: 4.5em; 
+            overflow: hidden; 
+            display: block; 
+        }        .task-info p.time { margin: auto 0 0 0; color: var(--accent); padding-top: 15px; font-weight: bold; }
+        
+        .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
+    </style>
 </head>
 <body>
 
@@ -63,7 +72,6 @@
             <li><a href="/documentation" id="sb-docs"> 🕮 Documentation</a></li>
             <li><a href="/leaderboard" id="sb-lead">🎖 Leaderboards</a></li>
             <li><a href="/credits" id="sb-cred">⏻ System Architects</a></li>
-            
             <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙︎ Mission Control</a></li>
         </ul>
         
@@ -79,7 +87,7 @@
                 <div class="timer" id="countdown-timer">00:00:00</div>
             </div>
             
-            <div class="topbar-right" onclick="goToProfile()" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <div class="topbar-right" onclick="goToProfile()">
                 <div class="icon-circle">
                     <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" style="width: 26px; height: 26px;">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
@@ -110,7 +118,6 @@
             if (el && adminQuery) el.href += adminQuery;
         });
 
-// Show Mission Control button if an admin key is present
         if (urlParams.has('admin')) {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;
@@ -130,14 +137,14 @@
             const stateRes = await fetch('/api/state' + adminQuery);
             const state = await stateRes.json();
             
-            // FIX: Explicitly check for undefined so 0 is safely accepted!
             const unlockedLimit = state.unlockedTasks !== undefined ? state.unlockedTasks : 1;
 
             const tasksGrid = document.getElementById('tasks-grid');
             tasksGrid.innerHTML = ''; 
 
-            if (tasks.length === 0) {
-                tasksGrid.innerHTML = '<h2 style="grid-column: 1/-1; text-align: center; color: red;">No Tasks Found!</h2>';
+            // FIX: Prevent Javascript crash if the server returns an error instead of an array
+            if (!Array.isArray(tasks) || tasks.length === 0) {
+                tasksGrid.innerHTML = '<h2 style="grid-column: 1/-1; text-align: center; color: var(--text-main);">No Tasks Found!</h2>';
                 return;
             }
 
@@ -146,15 +153,20 @@
                 const card = document.createElement('div');
                 card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
                 
+                // FIX: Use Javascript to handle the click instead of an HTML <a> tag
+                card.onclick = (e) => {
+                    // If they specifically clicked a link inside the description, let the link handle it
+                    if (e.target.tagName.toLowerCase() === 'a') return; 
+                    window.location.href = `/game/task/${encodeURIComponent(task.name)}${adminQuery}`;
+                };
+                
                 card.innerHTML = `
-                    <a href="/game/task/${encodeURIComponent(task.name)}${adminQuery}" style="text-decoration: none; color: inherit; display: block; height: 100%;">
-                        <img src="${task.image_url || 'https://via.placeholder.com/400x220/1a102a/e066a3?text=NO+IMAGE+DATA'}" class="task-image" alt="Task Image" onerror="this.src='https://via.placeholder.com/400x220/1a102a/e066a3?text=IMAGE+ERROR'">
-                        <div class="task-info">
-                            <h3>${task.name}</h3>
-                            <p>${task.description}</p>
-                            <p style="color: var(--accent); margin-top:10px;">⏱ Est: ${task.estimated_time}</p>
-                        </div>
-                    </a>
+                    <img src="${task.image_url}" class="task-image" alt="Task Image">
+                    <div class="task-info">
+                        <h3>${task.name}</h3>
+                        <p class="desc">${task.description || ''}</p>
+                        <p class="time">⏱ Est: ${task.estimated_time}</p>
+                    </div>
                 `;
                 tasksGrid.appendChild(card);
             });
@@ -202,7 +214,6 @@
         updateClockLoop();      
         setInterval(updateClockLoop, 1000); 
     };
-
 </script>
 </body>
 </html>
