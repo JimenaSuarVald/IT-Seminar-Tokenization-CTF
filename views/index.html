@@ -38,15 +38,19 @@
         .topbar-right:hover { transform: scale(1.05); }
         .icon-circle { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main); display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark); }
         
-        /* --- TASK GRID --- */
-        .task-container { padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 30px; }
+/* 1. Reduced padding slightly to move everything higher up the card */
+        .task-info { padding: 25px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; box-sizing: border-box; }
         
-        /* FIX: Added display: flex directly to the card to prevent HTML nesting errors */
-        .task-card { background-color: var(--panel-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 183, 77, 0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; display: flex; flex-direction: column; cursor: pointer; }
-        .task-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(224, 102, 163, 0.4); border-color: var(--accent); }
+        /* 2. Shrunk the bottom margin to pull the description tight against the title */
+        .task-info h3 { margin: 0 0 8px 0; color: #fff; font-size: 1.4em; letter-spacing: 1px; }
         
-        .task-image { width: 100%; height: 220px; background-color: #000; object-fit: cover; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
+        /* 3. CRITICAL FIX: Used max-height instead of height. It limits long text to 3 lines, but shrinks nicely for short text! */
+        .task-info p.desc { margin: 0; font-size: 0.95em; color: #ccc; line-height: 1.5; max-height: 4.5em; overflow: hidden; display: block; }
         
+        /* 4. Timer is safely anchored to the bottom */
+        .task-info p.time { margin: auto 0 0 0; color: var(--accent); padding-top: 15px; font-weight: bold; }
+        
+        .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
 .task-info { padding: 30px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; height: 100%; box-sizing: border-box; }
         
         /* The single, correct Title rule */
