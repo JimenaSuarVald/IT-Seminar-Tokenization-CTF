@@ -194,7 +194,7 @@
                 // Add it to the Quick Index
                 const qLink = document.createElement('a');
                 qLink.className = 'quick-link';
-                qLink.innerText = "📌 " + doc.title;
+                qLink.innerText = doc.title;
                 qLink.onclick = () => {
                     document.getElementById('category-' + doc.id).scrollIntoView({ behavior: 'smooth', block: 'start' });
                 };
