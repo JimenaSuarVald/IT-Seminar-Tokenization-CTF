@@ -8,14 +8,14 @@
         :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; }
         body { margin: 0; font-family: 'Courier New', Courier, monospace; background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- THE PUSHING SIDEBAR --- */
+        /* --- THE PUSHING LEFT SIDEBAR --- */
         .sidebar { width: 280px; background-color: var(--panel-bg); display: flex; flex-direction: column; transition: margin-left 0.3s ease; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 1000; height: 100vh; flex-shrink: 0; border-right: 2px solid var(--accent); }
         .sidebar.collapsed { margin-left: -280px; }
         
         .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; flex-grow: 1; }
         .sidebar-menu li { border-bottom: 1px solid var(--accent); }
         .sidebar-menu li:last-child { border-bottom: none; }
-        .sidebar-menu li a { display: flex; align-items: center; gap: 15px; padding: 20px; color: var(--text-main); text-decoration: none; font-size: 1.1em; font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s; }
+        .sidebar-menu li a { display: flex; align-items: center; gap: 15px; padding: 20px; color: var(--text-main); text-decoration: none; font-size: 1.1em; font-weight: bold; transition: 0.2s; }
         .sidebar-menu li a:hover { background-color: rgba(224, 102, 163, 0.2); padding-left: 30px; border-left: 5px solid var(--accent); }
 
         .sign-out-container { margin-top: auto; border-top: 2px solid var(--accent); background: rgba(211, 47, 47, 0.1); }
@@ -26,14 +26,11 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; width: 100%; position: relative; overflow-y: auto;}
         
         .topbar { position: relative; height: 70px; background-color: var(--panel-bg); display: flex; align-items: center; justify-content: center; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); flex-shrink: 0; }
-        
         .topbar-left { display: flex; align-items: center; gap: 20px; position: absolute; left: 20px; height: 100%; }
         
-        /* PERFECTLY CENTERED SQUARE BUTTON */
         .menu-toggle { background: var(--bg-dark); border: 2px solid var(--accent); color: var(--accent); font-size: 1.5em; cursor: pointer; border-radius: 5px; transition: 0.2s; display: flex; align-items: center; justify-content: center; height: 45px; width: 50px; padding: 0; }
         .menu-toggle:hover { background-color: var(--accent); color: white; box-shadow: 0 0 10px var(--accent); }
         
-        /* Account Button aligned right */
         .topbar-right { position: absolute; right: 20px; display: flex; flex-direction: row; align-items: center; gap: 12px; cursor: pointer; transition: transform 0.2s;}
         .topbar-right:hover { transform: scale(1.05); }
         .icon-circle { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main); display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark); }
@@ -42,23 +39,58 @@
         .doc-container { padding: 40px; max-width: 900px; margin: 0 auto; width: 100%; }
         h1 { text-shadow: 0 0 15px var(--accent); text-transform: uppercase; margin-bottom: 30px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
         .doc-list { display: flex; flex-direction: column; gap: 15px; }
+        
         .doc-item { background: var(--panel-bg); padding: 20px; border-radius: 10px; border: 1px solid rgba(224, 102, 163, 0.3); display: flex; justify-content: space-between; align-items: center; transition: 0.2s; cursor: pointer; }
         .doc-item:hover { border-color: var(--accent); box-shadow: 0 0 15px rgba(224, 102, 163, 0.2); transform: translateX(5px); }
         .doc-title { font-size: 1.3em; color: white; font-weight: bold; }
         
         .admin-controls { margin-bottom: 20px; display: none; }
         .admin-controls button { background: var(--accent); color: white; border: none; padding: 10px 20px; font-weight: bold; font-family: inherit; border-radius: 5px; cursor: pointer; height: auto; width: auto; display: inline-block; }
-    
-        .doc-subtitle { 
-            font-size: 1.4em; color: var(--accent); font-weight: bold; text-transform: uppercase; 
-            margin-top: 30px; margin-bottom: 5px; border-bottom: 1px dashed rgba(224, 102, 163, 0.4); 
-            padding-bottom: 5px; display: flex; align-items: center; gap: 10px; 
-        }
-        .edit-badge { 
-            font-size: 0.6em; background: #d32f2f; color: white; padding: 4px 8px; 
-            border-radius: 4px; cursor: pointer; text-transform: none; font-family: monospace;
-        }
+
+        /* --- NEW: CATEGORY HEADERS & ADMIN BADGE --- */
+        .doc-subtitle { font-size: 1.4em; color: var(--accent); font-weight: bold; text-transform: uppercase; margin-top: 30px; margin-bottom: 5px; border-bottom: 1px dashed rgba(224, 102, 163, 0.4); padding-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .edit-badge { font-size: 0.6em; background: #d32f2f; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; text-transform: none; font-family: monospace; }
         .edit-badge:hover { background: white; color: #d32f2f; }
+
+        /* --- NEW: THE RIGHT SIDEBAR (QUICK INDEX) --- */
+        .right-menu {
+            position: fixed; top: 0; right: -300px; width: 300px; height: 100vh;
+            background: var(--panel-bg); border-left: 2px solid var(--accent);
+            box-shadow: -5px 0 20px rgba(0,0,0,0.8); transition: right 0.3s ease;
+            z-index: 2000; /* Stays above everything */
+            display: flex; flex-direction: column;
+        }
+        .right-menu.open { right: 0; }
+        
+        .right-menu-toggle {
+            position: absolute; top: 50%; left: -40px; transform: translateY(-50%);
+            width: 40px; height: 60px; background: var(--bg-dark);
+            border: 2px solid var(--accent); border-right: none;
+            color: var(--text-main); font-size: 1.5em; font-weight: bold;
+            cursor: pointer; border-radius: 10px 0 0 10px;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; box-shadow: -5px 0 10px rgba(0,0,0,0.5);
+        }
+        .right-menu-toggle:hover { background: var(--accent); color: white; }
+        
+        .right-menu-header {
+            padding: 25px 20px; background: rgba(0,0,0,0.3);
+            border-bottom: 1px dashed var(--accent); text-align: center;
+            font-weight: bold; color: var(--text-main); letter-spacing: 2px;
+        }
+        .right-menu-content {
+            padding: 15px; overflow-y: auto; flex-grow: 1;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .quick-link {
+            color: white; text-decoration: none; cursor: pointer;
+            padding: 12px; border-radius: 5px; transition: 0.2s;
+            font-size: 1em; border: 1px solid transparent;
+        }
+        .quick-link:hover {
+            background: rgba(224, 102, 163, 0.2); border-color: var(--accent);
+            color: var(--text-main); padding-left: 20px;
+        }
     </style>
 </head>
 <body>
@@ -69,10 +101,8 @@
             <li><a href="/documentation" id="sb-docs"> 🕮 Documentation</a></li>
             <li><a href="/leaderboard" id="sb-lead">🎖 Leaderboards</a></li>
             <li><a href="/credits" id="sb-cred">⏻ System Architects</a></li>
-            
             <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙︎ Mission Control</a></li>
         </ul>
-        
         <div class="sign-out-container">
             <a href="/login" id="sb-logout">➜] Sign Out</a>
         </div>
@@ -83,7 +113,6 @@
             <div class="topbar-left">
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">☰</button>
             </div>
-            
             <div class="topbar-right" onclick="goToProfile()">
                 <div class="icon-circle">
                     <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" style="width: 26px; height: 26px;">
@@ -122,17 +151,15 @@
         document.getElementById('adminPanel').style.display = 'block';
     }
 
-    function goToProfile() { 
-        window.location.href = '/profile' + adminQuery; 
-    }
+    function goToProfile() { window.location.href = '/profile' + adminQuery; }
 
-    // --- NEW: Toggle the Right Quick Index ---
+    // --- RIGHT SIDEBAR TOGGLE ---
     function toggleRightMenu() {
         const menu = document.getElementById('rightMenu');
         const btn = document.getElementById('rightMenuBtn');
         menu.classList.toggle('open');
         
-        // Flip the arrow based on state
+        // Flip the arrow
         if (menu.classList.contains('open')) {
             btn.innerText = '>';
         } else {
@@ -140,6 +167,7 @@
         }
     }
 
+    // --- FETCH & RENDER DOCS ---
     async function loadDocs() {
         const res = await fetch('/api/documents' + adminQuery);
         const docs = await res.json();
@@ -148,7 +176,7 @@
         const quickIndex = document.getElementById('quickIndexList');
         
         list.innerHTML = '';
-        quickIndex.innerHTML = ''; // Clear the quick index on load
+        quickIndex.innerHTML = '';
 
         if (docs.length === 0) { list.innerHTML = '<p>No documents found in the archive.</p>'; return; }
 
@@ -157,24 +185,22 @@
             const isAdmin = urlParams.get('admin');
             const editBtnHtml = isAdmin ? `<span class="edit-badge" onclick="event.stopPropagation(); window.location.href='/documentation/edit/${doc.id}${adminQuery}'">⚙ Edit</span>` : '';
 
-            // If it is a Subtitle/Header...
             if (doc.is_header) {
+                // IT'S A CATEGORY SUBTITLE
                 div.className = 'doc-subtitle';
-                div.id = 'category-' + doc.id; // Assign an ID so we can jump to it!
+                div.id = 'category-' + doc.id; // Anchor tag for scrolling
                 div.innerHTML = `${editBtnHtml} ${doc.title}`;
                 
-                // --- NEW: Add it to the Quick Index Sidebar ---
+                // Add it to the Quick Index
                 const qLink = document.createElement('a');
                 qLink.className = 'quick-link';
                 qLink.innerText = "📌 " + doc.title;
                 qLink.onclick = () => {
-                    // Smoothly auto-scroll to this specific category
                     document.getElementById('category-' + doc.id).scrollIntoView({ behavior: 'smooth', block: 'start' });
                 };
                 quickIndex.appendChild(qLink);
-            } 
-            // If it is a normal clickable document...
-            else {
+            } else {
+                // IT'S A NORMAL DOCUMENT
                 div.className = 'doc-item';
                 div.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -193,10 +219,6 @@
     window.onload = loadDocs;
 
     // --- UNIVERSAL LEFT SIDEBAR LOGIC ---
-    function toggleSidebar() { 
-        document.getElementById('sidebar').classList.toggle('collapsed'); 
-    }
-    
     // Auto-attach admin keys to all sidebar links when the page loads
     window.addEventListener('DOMContentLoaded', () => {
         const links = ['sb-home', 'sb-docs', 'sb-lead', 'sb-cred', 'sb-logout'];
