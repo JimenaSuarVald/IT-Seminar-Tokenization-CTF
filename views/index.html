@@ -38,31 +38,20 @@
         .topbar-right:hover { transform: scale(1.05); }
         .icon-circle { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main); display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark); }
         
-/* 1. Reduced padding slightly to move everything higher up the card */
+        /* --- TASK GRID (These were the missing rules!) --- */
+        .task-container { padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 30px; }
+        
+        .task-card { background-color: var(--panel-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 183, 77, 0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; display: flex; flex-direction: column; cursor: pointer; }
+        .task-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(224, 102, 163, 0.4); border-color: var(--accent); }
+        
+        .task-image { width: 100%; height: 220px; background-color: #000; object-fit: cover; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
+        
+        /* --- CLEAN TASK INFO RULES --- */
         .task-info { padding: 25px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; box-sizing: border-box; }
-        
-        /* 2. Shrunk the bottom margin to pull the description tight against the title */
         .task-info h3 { margin: 0 0 8px 0; color: #fff; font-size: 1.4em; letter-spacing: 1px; }
-        
-        /* 3. CRITICAL FIX: Used max-height instead of height. It limits long text to 3 lines, but shrinks nicely for short text! */
         .task-info p.desc { margin: 0; font-size: 0.95em; color: #ccc; line-height: 1.5; max-height: 4.5em; overflow: hidden; display: block; }
-        
-        /* 4. Timer is safely anchored to the bottom */
         .task-info p.time { margin: auto 0 0 0; color: var(--accent); padding-top: 15px; font-weight: bold; }
         
-        .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
-.task-info { padding: 30px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; height: 100%; box-sizing: border-box; }
-        
-        /* The single, correct Title rule */
-        .task-info h3 { margin: 0 0 20px 0; color: #fff; font-size: 1.4em; letter-spacing: 1px; }
-        
-        /* The single, correct Description rule */
-        .task-info p.desc { margin: 0; font-size: 0.95em; color: #ccc; line-height: 1.7; height: 5.1em; overflow: hidden; display: block; }
-        
-        /* The single, correct Timer rule */
-        .task-info p.time { margin: auto 0 0 0; color: var(--accent); padding-top: 25px; font-weight: bold; }
-        
-        .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
         .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
     </style>
 </head>
@@ -144,7 +133,6 @@
             const tasksGrid = document.getElementById('tasks-grid');
             tasksGrid.innerHTML = ''; 
 
-            // FIX: Prevent Javascript crash if the server returns an error instead of an array
             if (!Array.isArray(tasks) || tasks.length === 0) {
                 tasksGrid.innerHTML = '<h2 style="grid-column: 1/-1; text-align: center; color: var(--text-main);">No Tasks Found!</h2>';
                 return;
@@ -155,9 +143,7 @@
                 const card = document.createElement('div');
                 card.className = `task-card ${isLocked ? 'locked-task' : ''}`;
                 
-                // FIX: Use Javascript to handle the click instead of an HTML <a> tag
                 card.onclick = (e) => {
-                    // If they specifically clicked a link inside the description, let the link handle it
                     if (e.target.tagName.toLowerCase() === 'a') return; 
                     window.location.href = `/game/task/${encodeURIComponent(task.name)}${adminQuery}`;
                 };
