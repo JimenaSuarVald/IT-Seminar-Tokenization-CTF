@@ -107,11 +107,13 @@ db.serialize(() => {
         PRIMARY KEY (player_id, task_id)
     )`);
 
-    // --- NEW: Documentation Table ---
+// --- UPDATED: Documentation Table ---
     db.run(`CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         content TEXT,
+        position INTEGER DEFAULT 0,
+        is_header INTEGER DEFAULT 0,
         created_at INTEGER
     )`);
 });
@@ -163,7 +165,7 @@ app.get('/documentation/edit/:id', requireLogin, (req, res) => {
 
 // 4. API: Get all documents for the index
 app.get('/api/documents', requireLogin, (req, res) => {
-    db.all("SELECT id, title FROM documents ORDER BY id ASC", [], (err, rows) => {
+    db.all("SELECT id, title, position, is_header FROM documents ORDER BY position ASC", [], (err, rows) => {
         if (err) return res.status(500).json([]);
         res.json(rows);
     });
@@ -177,19 +179,20 @@ app.get('/api/document/:id', requireLogin, (req, res) => {
     });
 });
 
-// 6. API: Save or Update a document
 app.post('/api/document/save', express.json(), (req, res) => {
     if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Denied");
     
-    const { id, title, content } = req.body;
+    const { id, title, content, position, is_header } = req.body;
+    const pos = parseInt(position) || 0;
+    const headerFlag = is_header ? 1 : 0;
     
     if (id === 'new') {
-        db.run("INSERT INTO documents (title, content, created_at) VALUES (?, ?, ?)", [title, content, Date.now()], function(err) {
+        db.run("INSERT INTO documents (title, content, position, is_header, created_at) VALUES (?, ?, ?, ?, ?)", [title, content, pos, headerFlag, Date.now()], function(err) {
             if (err) return res.status(500).json({ success: false });
             res.json({ success: true, newId: this.lastID });
         });
     } else {
-        db.run("UPDATE documents SET title = ?, content = ? WHERE id = ?", [title, content, id], (err) => {
+        db.run("UPDATE documents SET title = ?, content = ?, position = ?, is_header = ? WHERE id = ?", [title, content, pos, headerFlag, id], (err) => {
             if (err) return res.status(500).json({ success: false });
             res.json({ success: true, newId: id });
         });

@@ -49,6 +49,16 @@
         .admin-controls { margin-bottom: 20px; display: none; }
         .admin-controls button { background: var(--accent); color: white; border: none; padding: 10px 20px; font-weight: bold; font-family: inherit; border-radius: 5px; cursor: pointer; height: auto; width: auto; display: inline-block; }
     
+        .doc-subtitle { 
+            font-size: 1.4em; color: var(--accent); font-weight: bold; text-transform: uppercase; 
+            margin-top: 30px; margin-bottom: 5px; border-bottom: 1px dashed rgba(224, 102, 163, 0.4); 
+            padding-bottom: 5px; display: flex; align-items: center; gap: 10px; 
+        }
+        .edit-badge { 
+            font-size: 0.6em; background: #d32f2f; color: white; padding: 4px 8px; 
+            border-radius: 4px; cursor: pointer; text-transform: none; font-family: monospace;
+        }
+        .edit-badge:hover { background: white; color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -97,6 +107,13 @@
         </div>
     </div>
 
+    <div class="right-menu" id="rightMenu">
+        <div class="right-menu-toggle" id="rightMenuBtn" onclick="toggleRightMenu()">&lt;</div>
+        <div class="right-menu-header">QUICK INDEX</div>
+        <div class="right-menu-content" id="quickIndexList">
+            </div>
+    </div>
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
@@ -105,25 +122,69 @@
         document.getElementById('adminPanel').style.display = 'block';
     }
 
-
-    // Navigates to the profile and keeps your admin status if you have it!
     function goToProfile() { 
         window.location.href = '/profile' + adminQuery; 
+    }
+
+    // --- NEW: Toggle the Right Quick Index ---
+    function toggleRightMenu() {
+        const menu = document.getElementById('rightMenu');
+        const btn = document.getElementById('rightMenuBtn');
+        menu.classList.toggle('open');
+        
+        // Flip the arrow based on state
+        if (menu.classList.contains('open')) {
+            btn.innerText = '>';
+        } else {
+            btn.innerText = '<';
+        }
     }
 
     async function loadDocs() {
         const res = await fetch('/api/documents' + adminQuery);
         const docs = await res.json();
+        
         const list = document.getElementById('docList');
+        const quickIndex = document.getElementById('quickIndexList');
+        
         list.innerHTML = '';
+        quickIndex.innerHTML = ''; // Clear the quick index on load
 
         if (docs.length === 0) { list.innerHTML = '<p>No documents found in the archive.</p>'; return; }
 
         docs.forEach(doc => {
             const div = document.createElement('div');
-            div.className = 'doc-item';
-            div.innerHTML = `<span class="doc-title">${doc.title}</span> <span style="color:var(--accent);">Read ➔</span>`;
-            div.onclick = () => window.location.href = `/documentation/read/${doc.id}${adminQuery}`;
+            const isAdmin = urlParams.get('admin');
+            const editBtnHtml = isAdmin ? `<span class="edit-badge" onclick="event.stopPropagation(); window.location.href='/documentation/edit/${doc.id}${adminQuery}'">⚙ Edit</span>` : '';
+
+            // If it is a Subtitle/Header...
+            if (doc.is_header) {
+                div.className = 'doc-subtitle';
+                div.id = 'category-' + doc.id; // Assign an ID so we can jump to it!
+                div.innerHTML = `${editBtnHtml} ${doc.title}`;
+                
+                // --- NEW: Add it to the Quick Index Sidebar ---
+                const qLink = document.createElement('a');
+                qLink.className = 'quick-link';
+                qLink.innerText = "📌 " + doc.title;
+                qLink.onclick = () => {
+                    // Smoothly auto-scroll to this specific category
+                    document.getElementById('category-' + doc.id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                };
+                quickIndex.appendChild(qLink);
+            } 
+            // If it is a normal clickable document...
+            else {
+                div.className = 'doc-item';
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${editBtnHtml}
+                        <span class="doc-title">${doc.title}</span>
+                    </div> 
+                    <span style="color:var(--accent);">Read ➔</span>
+                `;
+                div.onclick = () => window.location.href = `/documentation/read/${doc.id}${adminQuery}`;
+            }
             list.appendChild(div);
         });
     }
@@ -131,23 +192,19 @@
     function createNewDoc() { window.location.href = `/documentation/edit/new${adminQuery}`; }
     window.onload = loadDocs;
 
-// --- UNIVERSAL SIDEBAR LOGIC ---
+    // --- UNIVERSAL LEFT SIDEBAR LOGIC ---
     function toggleSidebar() { 
         document.getElementById('sidebar').classList.toggle('collapsed'); 
     }
     
     // Auto-attach admin keys to all sidebar links when the page loads
     window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
-        
         const links = ['sb-home', 'sb-docs', 'sb-lead', 'sb-cred', 'sb-logout'];
         links.forEach(id => {
             const el = document.getElementById(id);
             if (el && adminQuery) el.href += adminQuery;
         });
 
-        // Show Mission Control button ONLY if they have the admin key in the URL
         if (urlParams.get('admin')) {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;

@@ -14,66 +14,27 @@
         .danger { background: #d32f2f; margin-left: 15px; }
     
         /* --- UNIVERSAL FLOATING SIDEBAR --- */
-        .menu-toggle {
-            position: fixed; top: 15px; left: 15px; z-index: 1001;
-            background: var(--bg-dark, #1a102a); border: 2px solid var(--accent, #e066a3); 
-            color: var(--accent, #e066a3); font-size: 1.5em; cursor: pointer; 
-            border-radius: 5px; padding: 5px 12px; transition: 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
+        .menu-toggle { position: fixed; top: 15px; left: 15px; z-index: 1001; background: var(--bg-dark, #1a102a); border: 2px solid var(--accent, #e066a3); color: var(--accent, #e066a3); font-size: 1.5em; cursor: pointer; border-radius: 5px; padding: 5px 12px; transition: 0.2s; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         .menu-toggle:hover { background-color: var(--accent, #e066a3); color: white; box-shadow: 0 0 15px var(--accent, #e066a3); }
-
-        /* The Push Animation for the whole site */
         body { transition: margin-left 0.3s ease !important; margin-left: 0; }
         body.sidebar-open { margin-left: 280px; }
-
-        .sidebar {
-            position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
-            background-color: var(--panel-bg, #2a1b40);
-            transition: transform 0.3s ease; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 1000;
-            display: flex; flex-direction: column; padding-top: 70px; 
-            border-right: 2px solid var(--accent, #e066a3);
-            box-sizing: border-box; /* FIX: Keeps the Sign Out button safely on the screen! */
-        }
+        .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background-color: var(--panel-bg, #2a1b40); transition: transform 0.3s ease; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 1000; display: flex; flex-direction: column; padding-top: 70px; border-right: 2px solid var(--accent, #e066a3); box-sizing: border-box; }
         .sidebar.collapsed { transform: translateX(-100%); }
-        
         .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; flex-grow: 1; }
         .sidebar-menu li { border-bottom: 1px solid var(--accent, #e066a3); }
         .sidebar-menu li:last-child { border-bottom: none; }
-        .sidebar-menu li a {
-            display: flex; align-items: center; gap: 15px; padding: 20px;
-            color: var(--text-main, #ffb74d); text-decoration: none; font-size: 1.1em; 
-            font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s;
-        }
-        .sidebar-menu li a:hover {
-            background-color: rgba(224, 102, 163, 0.2); padding-left: 30px; border-left: 5px solid var(--accent, #e066a3);
-        }
-
-        /* --- DEDICATED SIGN OUT ANCHOR --- */
-        .sign-out-container { 
-            margin-top: auto; 
-            border-top: 2px solid var(--accent, #e066a3); 
-            background: rgba(211, 47, 47, 0.1); 
-        }
-        .sign-out-container a { 
-            display: flex; align-items: center; gap: 15px; padding: 20px;
-            color: #d32f2f; text-decoration: none; font-size: 1.1em; 
-            font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s;
-        }
-        .sign-out-container a:hover { 
-            background-color: rgba(211, 47, 47, 0.2); padding-left: 30px; border-left: 5px solid #d32f2f; 
-        }
-
-        /* --- COLLISION FIXES --- */
-        /* Pushes the clock over */
+        .sidebar-menu li a { display: flex; align-items: center; gap: 15px; padding: 20px; color: var(--text-main, #ffb74d); text-decoration: none; font-size: 1.1em; font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s; }
+        .sidebar-menu li a:hover { background-color: rgba(224, 102, 163, 0.2); padding-left: 30px; border-left: 5px solid var(--accent, #e066a3); }
+        .sign-out-container { margin-top: auto; border-top: 2px solid var(--accent, #e066a3); background: rgba(211, 47, 47, 0.1); }
+        .sign-out-container a { display: flex; align-items: center; gap: 15px; padding: 20px; color: #d32f2f; text-decoration: none; font-size: 1.1em; font-family: 'Courier New', monospace; font-weight: bold; transition: 0.2s; }
+        .sign-out-container a:hover { background-color: rgba(211, 47, 47, 0.2); padding-left: 30px; border-left: 5px solid #d32f2f; }
         .topbar-left { left: 80px !important; }
-        /* Pushes the "Back to Terminal" links over */
         a[href="javascript:history.back()"] { margin-left: 60px; display: inline-block; }
     </style>
 </head>
 <body>
 
     <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
     <nav class="sidebar collapsed" id="sidebar">
         <ul class="sidebar-menu">
@@ -81,10 +42,8 @@
             <li><a href="/documentation" id="sb-docs"> 🕮 Documentation</a></li>
             <li><a href="/leaderboard" id="sb-lead">🎖 Leaderboards</a></li>
             <li><a href="/credits" id="sb-cred">⏻ System Architects</a></li>
-            
             <li id="sb-admin-li" style="display: none;"><a href="/supersecretcyber-panel" id="sb-admin">⚙︎ Mission Control</a></li>
         </ul>
-        
         <div class="sign-out-container">
             <a href="/login" id="sb-logout">➜] Sign Out</a>
         </div>
@@ -99,7 +58,21 @@
         <label>Document Title:</label>
         <input type="text" id="docTitle" placeholder="e.g., Rules of Engagement">
         
-        <label>Document Body:</label>
+        <div style="display: flex; gap: 20px; margin-top: 15px; margin-bottom: 15px;">
+            <div style="flex: 2;">
+                <label>Entry Type:</label>
+                <select id="docType" style="width: 100%; padding: 15px; margin-top: 5px; background: #110a1c; border: 1px solid var(--accent); color: white; font-family: inherit; font-size: 1.2em;" onchange="toggleEditor()">
+                    <option value="0">📄 Standard Document</option>
+                    <option value="1">📌 Category Subtitle (Header)</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label>List Position:</label>
+                <input type="number" id="docPos" value="0" style="width: 100%; padding: 15px; margin-top: 5px; background: #110a1c; border: 1px solid var(--accent); color: white; font-family: inherit; font-size: 1.2em; box-sizing: border-box;">
+            </div>
+        </div>
+        
+        <label id="docBodyLabel">Document Body:</label>
         <div id="editor-container"></div>
 
         <div style="margin-top: 20px; display: flex; align-items: center;">
@@ -110,7 +83,6 @@
     </div>
 
 <script>
-
     document.write('<script src="https://cdn.quilljs.com/1.3.6/quill.js"><\/script>');
     
     const docId = window.location.pathname.split('/').pop();
@@ -129,54 +101,67 @@
 
         if (docId !== 'new') loadExistingData();
     });
-// --- UNIVERSAL SIDEBAR LOGIC ---
+
     function toggleSidebar() { 
         document.getElementById('sidebar').classList.toggle('collapsed'); 
-        document.body.classList.toggle('sidebar-open'); // FIX: Pushes the website over!
+        document.body.classList.toggle('sidebar-open');
     }
     
-    // Auto-attach admin keys to all sidebar links when the page loads
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const adminQuery = urlParams.has('admin') ? `?admin=${urlParams.get('admin')}` : '';
-        
         const links = ['sb-home', 'sb-docs', 'sb-lead', 'sb-cred', 'sb-logout'];
         links.forEach(id => {
             const el = document.getElementById(id);
             if (el && adminQuery) el.href += adminQuery;
         });
 
-        // Show Mission Control button ONLY if they have the admin key in the URL
         if (urlParams.get('admin')) {
             document.getElementById('sb-admin-li').style.display = 'block';
             document.getElementById('sb-admin').href += adminQuery;
         }
     });
 
+    function toggleEditor() {
+        const isHeader = document.getElementById('docType').value === '1';
+        document.getElementById('editor-container').style.display = isHeader ? 'none' : 'block';
+        document.getElementById('docBodyLabel').style.display = isHeader ? 'none' : 'block';
+    }
+
     async function loadExistingData() {
         const res = await fetch(`/api/document/${docId}${adminQuery}`);
         if(res.ok) {
             const doc = await res.json();
             document.getElementById('docTitle').value = doc.title;
+            document.getElementById('docPos').value = doc.position || 0;
+            document.getElementById('docType').value = doc.is_header ? '1' : '0';
             window.quill.root.innerHTML = doc.content;
+            toggleEditor();
         }
     }
 
     async function saveDoc() {
         const title = document.getElementById('docTitle').value;
         const content = window.quill.root.innerHTML;
+        const position = document.getElementById('docPos').value;
+        const is_header = document.getElementById('docType').value === '1';
         const status = document.getElementById('status');
         
         const res = await fetch(`/api/document/save${adminQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: docId, title, content })
+            body: JSON.stringify({ id: docId, title, content, position, is_header })
         });
         
         if(res.ok) {
             const data = await res.json();
             status.innerText = "✔ Saved!";
-            setTimeout(() => window.location.href = `/documentation/read/${data.newId}${adminQuery}`, 1000);
+            // If it is a header, send them back to the index instead of the reader
+            if (is_header) {
+                setTimeout(() => window.location.href = `/documentation${adminQuery}`, 1000);
+            } else {
+                setTimeout(() => window.location.href = `/documentation/read/${data.newId}${adminQuery}`, 1000);
+            }
         } else {
             status.innerText = "✖ Error saving.";
         }
