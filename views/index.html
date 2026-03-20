@@ -47,26 +47,18 @@
         
         .task-image { width: 100%; height: 220px; background-color: #000; object-fit: cover; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
         
-        .task-info { padding: 30px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; height: 100%; box-sizing: border-box; }        .task-info h3 { margin: 0 0 8px 0; color: #fff; font-size: 1.4em; letter-spacing: 1px; }
+.task-info { padding: 30px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; height: 100%; box-sizing: border-box; }
+        
+        /* The single, correct Title rule */
         .task-info h3 { margin: 0 0 20px 0; color: #fff; font-size: 1.4em; letter-spacing: 1px; }
         
-        /* 3. Increased line-height to 1.7 for readability, matching the height to exactly 3 lines (1.7 * 3 = 5.1em) */
+        /* The single, correct Description rule */
         .task-info p.desc { margin: 0; font-size: 0.95em; color: #ccc; line-height: 1.7; height: 5.1em; overflow: hidden; display: block; }
         
-        /* 4. Increased top padding to ensure the timer stays far away from the text */
+        /* The single, correct Timer rule */
         .task-info p.time { margin: auto 0 0 0; color: var(--accent); padding-top: 25px; font-weight: bold; }
         
-/* Strictly standard CSS: 1.5 line-height * 3 lines = 4.5em max height */
-        .task-info p.desc { 
-            margin: 0; 
-            font-size: 0.95em; 
-            color: #ccc; 
-            line-height: 1.5; 
-            height: 4.5em; 
-            overflow: hidden; 
-            display: block; 
-        }        .task-info p.time { margin: auto 0 0 0; color: var(--accent); padding-top: 15px; font-weight: bold; }
-        
+        .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
         .locked-task { filter: grayscale(100%) brightness(50%); pointer-events: none; opacity: 0.6; }
     </style>
 </head>
