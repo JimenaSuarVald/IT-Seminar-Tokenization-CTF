@@ -80,6 +80,12 @@
             <h1 id="docTitle">Loading...</h1>
             <div id="docContent" class="content">Decrypting files...</div>
         </div>
+        <div id="downloadContainer" style="display: none; margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--accent); text-align: center;">
+                <h3 style="color: var(--text-main); margin-top: 0;">ATTACHED GUIDE</h3>
+                <a id="downloadBtn" href="#" target="_blank" style="background: #4caf50; color: white; text-decoration: none; padding: 15px 30px; font-weight: bold; border-radius: 5px; font-size: 1.2em; display: inline-block; transition: 0.2s; box-shadow: 0 0 15px #4caf50;">
+                    ➤ Download File
+                </a>
+            </div>
     </div>
 
 <script>
@@ -119,8 +125,19 @@
         const res = await fetch(`/api/document/${docId}${adminQuery}`);
         if (!res.ok) { document.getElementById('docTitle').innerText = "ERROR 404"; return; }
         const doc = await res.json();
+        
         document.getElementById('docTitle').innerText = doc.title;
         document.getElementById('docContent').innerHTML = doc.content;
+
+        // NEW: If a file exists, show the download button and set the link!
+        if (doc.file_url) {
+            document.getElementById('downloadContainer').style.display = 'block';
+            document.getElementById('downloadBtn').href = doc.file_url;
+            
+            // Extract the filename so the button is descriptive
+            const fileName = doc.file_url.split('-').pop(); 
+            document.getElementById('downloadBtn').innerText = "➤ Download: " + fileName;
+        }
     }
 
     function editDoc() { window.location.href = `/documentation/edit/${docId}${adminQuery}`; }

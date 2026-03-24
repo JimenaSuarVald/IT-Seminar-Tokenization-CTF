@@ -8,7 +8,7 @@
         :root { --bg-dark: #1a102a; --text-main: #ffb74d; --accent: #e066a3; --panel-bg: #2a1b40; }
         body { margin: 0; padding: 30px; font-family: 'Courier New', monospace; background: var(--bg-dark); color: white; }
         .editor-card { max-width: 800px; margin: 0 auto; background: var(--panel-bg); padding: 30px; border-radius: 10px; border: 1px solid var(--accent); }
-        input[type="text"] { width: 100%; padding: 15px; margin: 15px 0; background: #110a1c; border: 1px solid var(--accent); color: white; font-family: inherit; font-size: 1.2em; box-sizing: border-box; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 15px; margin: 15px 0; background: #110a1c; border: 1px solid var(--accent); color: white; font-family: inherit; font-size: 1.2em; box-sizing: border-box; }
         #editor-container { height: 400px; background: white; color: black; border-radius: 0 0 5px 5px; margin-bottom: 20px;}
         button { background: var(--accent); color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; font-family: inherit;}
         .danger { background: #d32f2f; margin-left: 15px; }
@@ -72,11 +72,17 @@
             </div>
         </div>
         
+        <div id="fileUploadGroup">
+            <label>Attach Downloadable Guide (Any File Type):</label>
+            <input type="file" id="docFile">
+            <p id="existingFileNote" style="color: #4caf50; font-size: 0.9em; display: none; margin-top: -10px; margin-bottom: 15px;">✔ A file is already attached. Uploading a new one will replace it.</p>
+        </div>
+
         <label id="docBodyLabel">Document Body:</label>
         <div id="editor-container"></div>
 
         <div style="margin-top: 20px; display: flex; align-items: center;">
-            <button onclick="saveDoc()">🗁 Save Document</button>
+            <button onclick="saveDoc()" id="saveBtn">🗁 Save Document</button>
             <button onclick="deleteDoc()" class="danger" id="deleteBtn">🗑 Delete</button>
             <span id="status" style="margin-left: 15px; color: #4caf50;"></span>
         </div>
@@ -126,6 +132,7 @@
         const isHeader = document.getElementById('docType').value === '1';
         document.getElementById('editor-container').style.display = isHeader ? 'none' : 'block';
         document.getElementById('docBodyLabel').style.display = isHeader ? 'none' : 'block';
+        document.getElementById('fileUploadGroup').style.display = isHeader ? 'none' : 'block';
     }
 
     async function loadExistingData() {
@@ -136,27 +143,45 @@
             document.getElementById('docPos').value = doc.position || 0;
             document.getElementById('docType').value = doc.is_header ? '1' : '0';
             window.quill.root.innerHTML = doc.content;
+            
+            // Show note if a file already exists
+            if (doc.file_url) {
+                document.getElementById('existingFileNote').style.display = 'block';
+            }
+            
             toggleEditor();
         }
     }
 
     async function saveDoc() {
-        const title = document.getElementById('docTitle').value;
-        const content = window.quill.root.innerHTML;
-        const position = document.getElementById('docPos').value;
-        const is_header = document.getElementById('docType').value === '1';
         const status = document.getElementById('status');
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+
+        const is_header = document.getElementById('docType').value === '1';
+        
+        // Build a form payload so we can send the physical file alongside the text
+        const formData = new FormData();
+        formData.append('id', docId);
+        formData.append('title', document.getElementById('docTitle').value);
+        formData.append('content', window.quill.root.innerHTML);
+        formData.append('position', document.getElementById('docPos').value);
+        formData.append('is_header', is_header ? '1' : '0');
+
+        const fileInput = document.getElementById('docFile');
+        if (fileInput.files.length > 0) {
+            formData.append('docFile', fileInput.files[0]);
+        }
         
         const res = await fetch(`/api/document/save${adminQuery}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: docId, title, content, position, is_header })
+            body: formData // The browser automatically handles the multipart/form-data headers
         });
         
         if(res.ok) {
             const data = await res.json();
             status.innerText = "✔ Saved!";
-            // If it is a header, send them back to the index instead of the reader
             if (is_header) {
                 setTimeout(() => window.location.href = `/documentation${adminQuery}`, 1000);
             } else {
@@ -164,6 +189,8 @@
             }
         } else {
             status.innerText = "✖ Error saving.";
+            btn.innerText = "🗁 Save Document";
+            btn.disabled = false;
         }
     }
 
