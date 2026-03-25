@@ -55,6 +55,8 @@ const upload = multer({
     }
 });
 
+const uploadAny = multer({ storage: storage });
+
 
 // Looks for Cloudflare's connecting IP, otherwise falls back to standard IP
 app.use((req, res, next) => {
@@ -85,8 +87,6 @@ db.serialize(() => {
 
     // Create the 'players and tasks' table if it doesn't exist
 
-    // ... players table ...
-
     db.run(`CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
@@ -98,7 +98,7 @@ db.serialize(() => {
         flag TEXT
     )`);
 
-    // --- NEW: Track when players open a task ---
+    // --- Track when players open a task ---
     db.run(`CREATE TABLE IF NOT EXISTS player_timers (
         player_id INTEGER,
         task_id INTEGER,
@@ -106,14 +106,14 @@ db.serialize(() => {
         completed_at INTEGER DEFAULT NULL,
         PRIMARY KEY (player_id, task_id)
     )`);
-
-// --- UPDATED: Documentation Table ---
+// --- Documentation Table ---
     db.run(`CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         content TEXT,
         position INTEGER DEFAULT 0,
         is_header INTEGER DEFAULT 0,
+        file_url TEXT,
         created_at INTEGER
     )`);
 });
@@ -179,26 +179,65 @@ app.get('/api/document/:id', requireLogin, (req, res) => {
     });
 });
 
-app.post('/api/document/save', express.json(), (req, res) => {
-    if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Denied");
+// 6. API: Save or Update a document (NOW WITH CRASH PROTECTION)
+app.post('/api/document/save', uploadAny.single('docFile'), (req, res) => {
+    if (req.query.admin !== process.env.ADMIN_KEY) {
+        console.error("SAVE FAILED: Admin key mismatch!");
+        return res.status(403).send("Denied");
+    }
+
+    // SAFETY NET: If req.body is missing, default it to an empty object to prevent a crash
+    const safeBody = req.body || {};
     
-    const { id, title, content, position, is_header } = req.body;
+    // DEBUG LOGS: Let's see exactly what the browser is actually sending
+    console.log("--> [DEBUG] SAVE ROUTE HIT");
+    console.log("--> Content-Type:", req.headers['content-type']);
+    console.log("--> Parsed Body:", safeBody);
+    console.log("--> Parsed File:", req.file ? req.file.filename : "No file attached");
+
+    const { id, title, content, position, is_header } = safeBody;
     const pos = parseInt(position) || 0;
-    const headerFlag = is_header ? 1 : 0;
+    const headerFlag = parseInt(is_header) === 1 ? 1 : 0;
     
+    if (!id) {
+        console.error("!!! FATAL: Form data was empty. The browser did not send FormData.");
+        return res.status(400).json({ success: false });
+    }
+
     if (id === 'new') {
-        db.run("INSERT INTO documents (title, content, position, is_header, created_at) VALUES (?, ?, ?, ?, ?)", [title, content, pos, headerFlag, Date.now()], function(err) {
-            if (err) return res.status(500).json({ success: false });
+        const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
+        
+        db.run("INSERT INTO documents (title, content, position, is_header, file_url, created_at) VALUES (?, ?, ?, ?, ?, ?)", 
+        [title, content, pos, headerFlag, fileUrl, Date.now()], function(err) {
+            if (err) {
+                console.error("!!! DB INSERT ERROR !!! ->", err.message);
+                return res.status(500).json({ success: false });
+            }
             res.json({ success: true, newId: this.lastID });
         });
     } else {
-        db.run("UPDATE documents SET title = ?, content = ?, position = ?, is_header = ? WHERE id = ?", [title, content, pos, headerFlag, id], (err) => {
-            if (err) return res.status(500).json({ success: false });
-            res.json({ success: true, newId: id });
-        });
+        if (req.file) {
+            const fileUrl = `/uploads/${req.file.filename}`;
+            db.run("UPDATE documents SET title = ?, content = ?, position = ?, is_header = ?, file_url = ? WHERE id = ?", 
+            [title, content, pos, headerFlag, fileUrl, id], (err) => {
+                if (err) {
+                    console.error("!!! DB UPDATE ERROR (With File) !!! ->", err.message);
+                    return res.status(500).json({ success: false });
+                }
+                res.json({ success: true, newId: id });
+            });
+        } else {
+            db.run("UPDATE documents SET title = ?, content = ?, position = ?, is_header = ? WHERE id = ?", 
+            [title, content, pos, headerFlag, id], (err) => {
+                if (err) {
+                    console.error("!!! DB UPDATE ERROR (Text Only) !!! ->", err.message);
+                    return res.status(500).json({ success: false });
+                }
+                res.json({ success: true, newId: id });
+            });
+        }
     }
 });
-
 // 7. API: Delete a document
 app.post('/api/document/delete/:id', (req, res) => {
     if (req.query.admin !== process.env.ADMIN_KEY) return res.status(403).send("Denied");
