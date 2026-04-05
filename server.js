@@ -689,16 +689,17 @@ app.get('/supersecretcyber-panel/manage-players', (req, res) => {
     db.all("SELECT id, username, score FROM players", [], (err, rows) => {
         if (err) return res.status(500).send("Database error.");
 
-        let html = `
+let html = `
         <body style="background:#1a102a; color:#ffb74d; font-family:monospace; padding: 40px; text-align: center;">
             <h1 style="color: #ffb74d; text-shadow: 0 0 10px #ffb74d;">➤ PLAYER MANAGER</h1>
             <a href="/supersecretcyber-panel?admin=${process.env.ADMIN_KEY}" style="color: #e066a3; text-decoration: none; border: 1px solid #e066a3; padding: 10px; border-radius: 5px; transition: 0.2s;">◄ Back to Mission Control</a>
             
-            <table style="margin: 40px auto; border-collapse: collapse; width: 80%; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px #ffb74d;">
+            <table style="margin: 40px auto; border-collapse: collapse; width: 90%; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px #ffb74d;">
                 <tr style="background: #ffb74d; color: #1a102a;">
                     <th style="padding: 15px; border: 1px solid #444;">ID</th>
                     <th style="padding: 15px; border: 1px solid #444;">Username</th>
                     <th style="padding: 15px; border: 1px solid #444;">Score</th>
+                    <th style="padding: 15px; border: 1px solid #444;">Reset Password</th>
                     <th style="padding: 15px; border: 1px solid #444;">Actions</th>
                 </tr>
         `;
@@ -714,6 +715,14 @@ app.get('/supersecretcyber-panel/manage-players', (req, res) => {
                             <input type="hidden" name="playerId" value="${player.id}">
                             <input type="number" name="score" value="${player.score}" style="width: 80px; padding: 5px; background: #110a1c; color: white; border: 1px solid #ffb74d; border-radius: 5px; text-align: center; font-family: monospace; font-size: 1.1em;">
                             <button type="submit" style="background:#4caf50; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px; font-weight:bold;">SAVE</button>
+                        </form>
+                    </td>
+                    <td style="padding: 15px; border: 1px solid #444;">
+                        <form action="/api/player/reset-password" method="POST" style="margin:0; display:flex; justify-content:center; gap:10px;">
+                            <input type="hidden" name="adminKey" value="${process.env.ADMIN_KEY}">
+                            <input type="hidden" name="playerId" value="${player.id}">
+                            <input type="text" name="newPassword" placeholder="New Password" style="width: 130px; padding: 5px; background: #110a1c; color: white; border: 1px solid #e066a3; border-radius: 5px; text-align: center; font-family: monospace;">
+                            <button type="submit" style="background:#e066a3; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px; font-weight:bold;">RESET</button>
                         </form>
                     </td>
                     <td style="padding: 15px; border: 1px solid #444;">
@@ -748,6 +757,30 @@ app.post('/api/player/delete', express.urlencoded({ extended: true }), (req, res
         if (err) return res.status(500).send("Error deleting player.");
         res.redirect(`/supersecretcyber-panel/manage-players?admin=${process.env.ADMIN_KEY}`);
     });
+});
+
+
+// --- NEW: RESET PLAYER PASSWORD ---
+app.post('/api/player/reset-password', express.urlencoded({ extended: true }), async (req, res) => {
+    if (req.body.adminKey !== process.env.ADMIN_KEY) return res.status(403).send("Denied.");
+    
+    const newPassword = req.body.newPassword;
+    if (!newPassword || newPassword.trim() === '') {
+        return res.send(`<h1 style="color:red; text-align:center;">Error: Password cannot be blank.</h1><button onclick="window.history.back()">Go Back</button>`);
+    }
+
+    try {
+        // We MUST scramble the new password before storing it, or the login screen will reject it
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        db.run("UPDATE players SET password = ? WHERE id = ?", [hashedPassword, req.body.playerId], (err) => {
+            if (err) return res.status(500).send("Error updating password.");
+            res.redirect(`/supersecretcyber-panel/manage-players?admin=${process.env.ADMIN_KEY}`);
+        });
+    } catch (err) {
+        console.error("Encryption Error:", err);
+        res.status(500).send("Error securing the new password.");
+    }
 });
 
 // --- TASK MANAGER (Admin Menu View) ---
