@@ -38,10 +38,28 @@
         .topbar-right:hover { transform: scale(1.05); }
         .icon-circle { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--text-main); display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark); }
         
-        /* --- TASK GRID (These were the missing rules!) --- */
-        .task-container { padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 30px; }
+        .task-container { 
+            padding: 30px; 
+            overflow-y: auto; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); 
+            gap: 30px; 
+            flex-shrink: 0; /* <-- ADD THIS: Stops the container from crushing the cards */
+        }
         
-        .task-card { background-color: var(--panel-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 183, 77, 0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; display: flex; flex-direction: column; cursor: pointer; }
+        .task-card { 
+            background-color: var(--panel-bg); 
+            border-radius: 15px; 
+            overflow: hidden; 
+            border: 1px solid rgba(255, 183, 77, 0.2); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+            transition: 0.2s; 
+            display: flex; 
+            flex-direction: column; 
+            cursor: pointer; 
+            min-height: 380px; /* <-- ADD THIS: Guarantees the card is always tall enough for text */
+        }     
+           
         .task-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(224, 102, 163, 0.4); border-color: var(--accent); }
         
         .task-image { width: 100%; height: 220px; background-color: #000; object-fit: cover; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
